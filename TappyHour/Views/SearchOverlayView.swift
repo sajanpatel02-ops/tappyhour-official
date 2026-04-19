@@ -10,6 +10,17 @@ struct SearchOverlayView: View {
         return NEIGHBORHOODS.filter { $0.lowercased().contains(vm.query.lowercased()) }
     }
 
+    private var matchingVenues: [Venue] {
+        guard !vm.query.isEmpty else { return [] }
+        let q = vm.query.lowercased()
+        return vm.venues.filter {
+            $0.name.lowercased().contains(q) ||
+            $0.neighborhood.lowercased().contains(q) ||
+            $0.cuisine.lowercased().contains(q) ||
+            $0.tags.contains(where: { $0.lowercased().contains(q) })
+        }
+    }
+
     var body: some View {
         t.bg.ignoresSafeArea()
             .overlay(content)
@@ -52,22 +63,46 @@ struct SearchOverlayView: View {
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
+                    // Venue matches (shown as you type)
+                    if !matchingVenues.isEmpty {
+                        sectionHeader("Venues")
+                        ForEach(matchingVenues) { v in
+                            searchRow(icon: "wineglass", label: v.name, sub: "\(v.neighborhood) · \(v.cuisine)") {
+                                // Commit the venue name as the query so the map/list filter to this pin,
+                                // but don't open the detail — user wants to see it in context first.
+                                vm.query = v.name
+                                vm.isSearchActive = false
+                                vm.selectPin(v.id)
+                            }
+                        }
+                    } else if !vm.query.isEmpty && filteredNeighborhoods.isEmpty {
+                        Text("No matches for \"\(vm.query)\"")
+                            .font(.system(size: 14))
+                            .foregroundStyle(t.muted)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+                    }
+
                     // Recents
-                    sectionHeader("Recent")
-                    ForEach(RECENT_SEARCHES, id: \.self) { r in
-                        searchRow(icon: "clock", label: r) {
-                            vm.query = r
-                            vm.isSearchActive = false
+                    if vm.query.isEmpty {
+                        sectionHeader("Recent")
+                        ForEach(RECENT_SEARCHES, id: \.self) { r in
+                            searchRow(icon: "clock", label: r) {
+                                vm.query = r
+                                vm.isSearchActive = false
+                            }
                         }
                     }
 
                     // Neighborhoods
-                    sectionHeader("Neighborhoods in Chicago")
-                        .padding(.top, 12)
-                    ForEach(filteredNeighborhoods, id: \.self) { n in
-                        searchRow(icon: "mappin", label: n, showChevron: true) {
-                            vm.query = n
-                            vm.isSearchActive = false
+                    if !filteredNeighborhoods.isEmpty {
+                        sectionHeader("Neighborhoods in Chicago")
+                            .padding(.top, 12)
+                        ForEach(filteredNeighborhoods, id: \.self) { n in
+                            searchRow(icon: "mappin", label: n, showChevron: true) {
+                                vm.query = n
+                                vm.isSearchActive = false
+                            }
                         }
                     }
                 }
@@ -86,16 +121,23 @@ struct SearchOverlayView: View {
             .padding(.vertical, 8)
     }
 
-    private func searchRow(icon: String, label: String, showChevron: Bool = false, action: @escaping () -> Void) -> some View {
+    private func searchRow(icon: String, label: String, sub: String? = nil, showChevron: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 14))
                     .foregroundStyle(t.muted)
                     .frame(width: 20)
-                Text(label)
-                    .font(.system(size: 15))
-                    .foregroundStyle(t.text)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label)
+                        .font(.system(size: 15))
+                        .foregroundStyle(t.text)
+                    if let sub, !sub.isEmpty {
+                        Text(sub)
+                            .font(.system(size: 12))
+                            .foregroundStyle(t.muted)
+                    }
+                }
                 Spacer()
                 if showChevron {
                     Image(systemName: "chevron.right")

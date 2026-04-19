@@ -16,6 +16,11 @@ settings:
     TARGETED_DEVICE_FAMILY: "1"
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
 
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: "2.0.0"
+
 targets:
   TappyHour:
     type: application
@@ -27,6 +32,7 @@ targets:
     settings:
       base:
         INFOPLIST_FILE: TappyHour/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TappyHour/TappyHour.entitlements
         PRODUCT_NAME: TappyHour
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -37,3 +43,5 @@ targets:
         embed: false
       - framework: CoreLocation.framework
         embed: false
+      - package: Supabase
+        product: Supabase

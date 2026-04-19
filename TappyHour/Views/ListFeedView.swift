@@ -41,7 +41,8 @@ struct ListFeedView: View {
                 .foregroundStyle(t.muted))
                 .font(.system(size: 12))
             Spacer()
-            managerChip
+            if vm.isAdmin { addChip }
+            if vm.canManageAny { managerChip }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
@@ -60,15 +61,38 @@ struct ListFeedView: View {
                     .foregroundStyle(t.muted)
             }
             Spacer()
-            managerChip
+            if vm.isAdmin { addChip }
+            if vm.canManageAny { managerChip }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
         .padding(.bottom, 12)
     }
 
+    private var addChip: some View {
+        Button { vm.isAddingVenue = true } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "plus")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("Add bar")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(0.3)
+            }
+            .foregroundStyle(t.text)
+            .padding(.horizontal, 11)
+            .padding(.vertical, 6)
+            .background(t.card)
+            .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(t.cardBorder, lineWidth: 0.5))
+        }
+    }
+
     private var managerChip: some View {
-        Button { vm.adminVenueId = "v1" } label: {
+        Button {
+            // Pick the first venue this user can manage (admins get the first venue overall).
+            let firstMine = vm.venues.first(where: { vm.managedVenueIds.contains($0.id) })?.id
+            vm.adminVenueId = firstMine ?? (vm.isAdmin ? vm.venues.first?.id : nil)
+        } label: {
             HStack(spacing: 5) {
                 Image(systemName: "gear")
                     .font(.system(size: 11, weight: .semibold))

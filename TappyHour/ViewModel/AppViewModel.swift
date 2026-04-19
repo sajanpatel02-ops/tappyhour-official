@@ -12,31 +12,107 @@ class AppViewModel {
     var viewMode: ViewMode = .map
     var showLogin: Bool = true
     var isLoggedIn: Bool = false
+    var isAuthenticating: Bool = false
+    var authError: String? = nil
+
+    var isAdmin: Bool = false
+    var managedVenueIds: Set<String> = []
+    var canManageAny: Bool { isAdmin || !managedVenueIds.isEmpty }
 
     var selectedVenueId: String? = nil
     var openVenueId: String? = nil
     var sheetSize: SheetSize = .half
 
-    var savedIds: Set<String> = ["v2", "v7"]
+    var savedIds: Set<String> = []
     var query: String = ""
     var isSearchActive: Bool = false
 
     var adminVenueId: String? = nil
+    var isAddingVenue: Bool = false
     var venueOverrides: [String: [DayKey: DaySchedule]] = [:]
+
+    var venues: [Venue] = VENUES   // sample data until first remote fetch completes
+    var isLoading: Bool = false
+    var loadError: String? = nil
 
     var theme: AppTheme { AppTheme(isDark: isDark, accent: accent) }
 
     var filteredVenues: [Venue] {
-        guard !query.isEmpty else { return VENUES }
+        guard !query.isEmpty else { return venues }
         let q = query.lowercased()
-        return VENUES.filter {
+        return venues.filter {
             $0.name.lowercased().contains(q) ||
             $0.neighborhood.lowercased().contains(q) ||
             $0.cuisine.lowercased().contains(q)
         }
     }
 
-    func venue(_ id: String) -> Venue? { VENUES.first { $0.id == id } }
+    func venue(_ id: String) -> Venue? { venues.first { $0.id == id } }
+
+    @MainActor
+    func signInApple() async {
+        isAuthenticating = true; authError = nil
+        do {
+            try await AuthService.shared.signInWithApple()
+            isLoggedIn = true; showLogin = false
+            await refreshRole()
+        } catch {
+            authError = "Apple sign-in failed: \(error.localizedDescription)"
+        }
+        isAuthenticating = false
+    }
+
+    @MainActor
+    func signInGoogle() async {
+        isAuthenticating = true; authError = nil
+        do {
+            try await AuthService.shared.signInWithGoogle()
+            isLoggedIn = true; showLogin = false
+            await refreshRole()
+        } catch {
+            authError = "Google sign-in failed: \(error.localizedDescription)"
+        }
+        isAuthenticating = false
+    }
+
+    @MainActor
+    func signOut() async {
+        try? await AuthService.shared.signOut()
+        isLoggedIn = false; showLogin = true
+        isAdmin = false; managedVenueIds = []
+        savedIds = []
+        query = ""
+    }
+
+    @MainActor
+    func restoreSession() async {
+        if AuthService.shared.currentUser() != nil {
+            isLoggedIn = true; showLogin = false
+            await refreshRole()
+        }
+    }
+
+    @MainActor
+    func refreshRole() async {
+        async let admin  = AuthService.shared.fetchIsAdmin()
+        async let mine   = AuthService.shared.fetchManagedVenueIds()
+        let (a, m) = await (admin, mine)
+        isAdmin = a
+        managedVenueIds = m
+    }
+
+    @MainActor
+    func loadVenues() async {
+        isLoading = true; loadError = nil
+        do {
+            let remote = try await VenueRepository.fetchAll()
+            if !remote.isEmpty { venues = remote }
+        } catch {
+            loadError = "\(error)"
+            print("VenueRepository.fetchAll failed:", error)
+        }
+        isLoading = false
+    }
 
     func resolvedVenue(_ id: String) -> Venue? {
         guard var v = venue(id) else { return nil }
@@ -58,5 +134,20 @@ class AppViewModel {
     func saveAdminSchedule(_ venueId: String, _ schedule: [DayKey: DaySchedule]) {
         venueOverrides[venueId] = schedule
         adminVenueId = nil
+    }
+
+    @MainActor
+    func publishAdminSchedule(_ venueId: String, _ schedule: [DayKey: DaySchedule]) async -> Bool {
+        do {
+            try await VenueRepository.publish(venueId: venueId, schedule: schedule)
+            // Refresh from server so all clients see the truth
+            await loadVenues()
+            adminVenueId = nil
+            return true
+        } catch {
+            loadError = "Publish failed: \(error)"
+            print("publish failed:", error)
+            return false
+        }
     }
 }

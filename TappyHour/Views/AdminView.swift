@@ -7,6 +7,8 @@ struct AdminView: View {
     @State private var schedule: [DayKey: DaySchedule]
     @State private var selectedDay: DayKey = TODAY
     @State private var hasChanges = false
+    @State private var isPublishing = false
+    @State private var publishError: String? = nil
 
     private var t: AppTheme { vm.theme }
     private var dayData: DaySchedule? { schedule[selectedDay] }
@@ -262,20 +264,42 @@ struct AdminView: View {
                     .background(t.card).clipShape(RoundedRectangle(cornerRadius: 14))
                     .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(t.cardBorder, lineWidth: 0.5))
             }
-            Button { vm.saveAdminSchedule(venue.id, schedule) } label: {
-                Text("Publish")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(vm.isDark ? Color(hex: "#0b0910") : .white)
-                    .frame(maxWidth: .infinity).padding(.vertical, 14)
-                    .background(hasChanges ? t.accent : t.muted)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            Button {
+                Task {
+                    isPublishing = true; publishError = nil
+                    let ok = await vm.publishAdminSchedule(venue.id, schedule)
+                    isPublishing = false
+                    if !ok { publishError = vm.loadError ?? "Publish failed" }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    if isPublishing { ProgressView().tint(vm.isDark ? Color(hex: "#0b0910") : .white) }
+                    Text(isPublishing ? "Publishing…" : "Publish")
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                .foregroundStyle(vm.isDark ? Color(hex: "#0b0910") : .white)
+                .frame(maxWidth: .infinity).padding(.vertical, 14)
+                .background((hasChanges && !isPublishing) ? t.accent : t.muted)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .disabled(!hasChanges)
+            .disabled(!hasChanges || isPublishing)
         }
         .padding(.horizontal, 16)
         .padding(.top, 12)
         .padding(.bottom, 34)
         .background(t.bg)
+        .overlay(alignment: .top) {
+            if let publishError {
+                Text(publishError)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 16).padding(.vertical, 8)
+                    .background(Color.red.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .padding(.horizontal, 16)
+                    .offset(y: -40)
+            }
+        }
     }
 
     private func sectionLabel(_ text: String) -> some View {

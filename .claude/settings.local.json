@@ -13,7 +13,8 @@
       "Bash(brew install *)",
       "Bash(xcodegen --version)",
       "Bash(xcodegen generate *)",
-      "Bash(xcodebuild -project /Users/sajanpatel/TappyHour/TappyHour.xcodeproj -scheme TappyHour -destination 'generic/platform=iOS Simulator' -configuration Debug build)"
+      "Bash(xcodebuild -project /Users/sajanpatel/TappyHour/TappyHour.xcodeproj -scheme TappyHour -destination 'generic/platform=iOS Simulator' -configuration Debug build)",
+      "Bash(xcodegen)"
     ]
   }
 }

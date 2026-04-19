@@ -53,16 +53,17 @@ struct LoginView: View {
                 // Auth buttons
                 VStack(spacing: 12) {
                     AuthButton(label: "Continue with Apple", icon: "apple.logo", theme: t) {
-                        vm.isLoggedIn = true
-                        vm.showLogin = false
+                        Task { await vm.signInApple() }
                     }
                     AuthButton(label: "Continue with Google", icon: "g.circle", theme: t) {
-                        vm.isLoggedIn = true
-                        vm.showLogin = false
+                        Task { await vm.signInGoogle() }
                     }
-                    AuthButton(label: "Continue with Email", icon: "envelope", theme: t) {
-                        vm.isLoggedIn = true
-                        vm.showLogin = false
+
+                    if let err = vm.authError {
+                        Text(err)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
                     }
 
                     // Browse without account

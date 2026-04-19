@@ -84,6 +84,38 @@ struct MapDiscoveryView: View {
                 // Bottom sheet
                 bottomSheet(t: t, geo: geo)
             }
+            .onChange(of: vm.query) { _, _ in recenterToFilter() }
+        }
+    }
+
+    private func recenterToFilter() {
+        let venues = vm.filteredVenues
+        guard !venues.isEmpty else { return }
+
+        if venues.count == 1, let v = venues.first {
+            withAnimation(.spring(response: 0.4)) {
+                position = .region(MKCoordinateRegion(
+                    center: v.coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.012, longitudeDelta: 0.012)
+                ))
+            }
+            return
+        }
+
+        let lats = venues.map(\.coordinate.latitude)
+        let lngs = venues.map(\.coordinate.longitude)
+        let minLat = lats.min()!, maxLat = lats.max()!
+        let minLng = lngs.min()!, maxLng = lngs.max()!
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLng + maxLng) / 2
+        )
+        let span = MKCoordinateSpan(
+            latitudeDelta: max((maxLat - minLat) * 1.5, 0.02),
+            longitudeDelta: max((maxLng - minLng) * 1.5, 0.02)
+        )
+        withAnimation(.spring(response: 0.4)) {
+            position = .region(MKCoordinateRegion(center: center, span: span))
         }
     }
 

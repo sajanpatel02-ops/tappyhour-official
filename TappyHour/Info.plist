@@ -39,5 +39,16 @@
 	</array>
 	<key>UIRequiresFullScreen</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.tappyhour.app.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tappyhour</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

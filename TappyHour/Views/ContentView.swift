@@ -45,6 +45,13 @@ struct ContentView: View {
         .animation(.spring(duration: 0.3), value: vm.adminVenueId)
         .animation(.easeInOut(duration: 0.2), value: vm.isSearchActive)
         .preferredColorScheme(vm.isDark ? .dark : .light)
+        .task {
+            await vm.restoreSession()
+            await vm.loadVenues()
+        }
+        .sheet(isPresented: $vm.isAddingVenue) {
+            AddVenueSheet(vm: vm)
+        }
     }
 
     @ViewBuilder
@@ -130,6 +137,34 @@ struct ContentView: View {
                     )
                 }
                 .buttonStyle(.plain)
+
+                // Profile menu
+                Menu {
+                    if vm.isLoggedIn {
+                        Text("Signed in")
+                        Button("Sign out", role: .destructive) {
+                            Task { await vm.signOut() }
+                        }
+                    } else {
+                        Button("Sign in") { vm.showLogin = true }
+                    }
+                } label: {
+                    Image(systemName: vm.isLoggedIn ? "person.crop.circle.fill" : "person.crop.circle")
+                        .font(.system(size: 22))
+                        .foregroundStyle(vm.isLoggedIn ? t.accent : t.text)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            vm.viewMode == .map
+                                ? (t.isDark ? Color(hex: "#1c1b1f").opacity(0.88) : Color.white.opacity(0.95))
+                                : t.card
+                        )
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(t.cardBorder, lineWidth: 0.5))
+                        .shadow(
+                            color: vm.viewMode == .map ? .black.opacity(0.12) : .clear,
+                            radius: 8, y: 3
+                        )
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 56)
