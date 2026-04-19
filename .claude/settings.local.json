@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(cp \"/Users/sajanpatel/.claude/projects/-Users-sajanpatel-TappyHour/b749503a-66cb-4655-8800-0b8d46b0ab8e/tool-results/webfetch-1776543831841-0c515p.bin\" /tmp/design.gz)",
+      "Bash(gunzip -f /tmp/design.gz)",
+      "Read(//tmp/**)",
+      "Bash(tar -tf /tmp/design)",
+      "Bash(tar -xf /tmp/design -C /tmp/)",
+      "Bash(xcode-select -p)",
+      "Bash(swift --version)",
+      "Bash(brew list *)",
+      "Bash(brew install *)",
+      "Bash(xcodegen --version)",
+      "Bash(xcodegen generate *)",
+      "Bash(xcodebuild -project /Users/sajanpatel/TappyHour/TappyHour.xcodeproj -scheme TappyHour -destination 'generic/platform=iOS Simulator' -configuration Debug build)"
+    ]
+  }
+}

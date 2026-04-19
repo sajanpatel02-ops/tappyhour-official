@@ -1,0 +1,437 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		08DAA995E6AD5E75AFB840F6 /* Venue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428FFDEDCA1D9C2BDE0B81FC /* Venue.swift */; };
+		1B2DB19039A2D0E6925A6F9C /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4E5F70CC15404BE6437AE4 /* SampleData.swift */; };
+		1FB14468887FADA2DA334F04 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06FD0E3447DCF3B8B7EA4D6C /* ContentView.swift */; };
+		26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D91C08C21D9592FF8131741 /* ListFeedView.swift */; };
+		452CCA2AAFDC3413CF1B43E9 /* MapDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */; };
+		4C49F1F6BC793846DB3C41BE /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0ECBE2F6D1C244327BB7CEDD /* MapKit.framework */; };
+		984DD8FB9E890B63B0E301F7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B57E7EC7B5E743526A0548 /* LoginView.swift */; };
+		B0972A5A6EEE36C1E441830D /* VenueDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1486361DCD60BC65094DC222 /* VenueDetailView.swift */; };
+		B4109E16553F7B9BC290A59E /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A9D16FC8D450D58551014F /* AppTheme.swift */; };
+		BB82578130E0BC6321C66888 /* AdminView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE46CEEECF692A33D20E3CA /* AdminView.swift */; };
+		C0019064F7B8295F99001540 /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7DA43B705EDC6CC331F850C /* AppViewModel.swift */; };
+		D1F53BDB79F490F4394876A7 /* SearchOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED0E9658ACCDF939C0AFC84 /* SearchOverlayView.swift */; };
+		D3DE5EFB4CB2B6264CFC4EC2 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60C9B0CD536AEF7746F85C24 /* CoreLocation.framework */; };
+		DA812F0BA849CAD92A1EFE94 /* VenueCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 552DE27D36B9946591D6DE35 /* VenueCard.swift */; };
+		DB28346087D7DB8E6D169E49 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AF1885CEA27CC10CD38B9609 /* Assets.xcassets */; };
+		F756D67B9ECF52852AB72E88 /* TappyHourApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11ED4ADAA6ABABE71D444EB /* TappyHourApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		06FD0E3447DCF3B8B7EA4D6C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		083BBAD049FE1058C1659F2C /* TappyHour.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TappyHour.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0ECBE2F6D1C244327BB7CEDD /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = MapKit.framework; sourceTree = "<group>"; };
+		1486361DCD60BC65094DC222 /* VenueDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VenueDetailView.swift; sourceTree = "<group>"; };
+		2D91C08C21D9592FF8131741 /* ListFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListFeedView.swift; sourceTree = "<group>"; };
+		2ED0E9658ACCDF939C0AFC84 /* SearchOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchOverlayView.swift; sourceTree = "<group>"; };
+		2EE46CEEECF692A33D20E3CA /* AdminView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminView.swift; sourceTree = "<group>"; };
+		428FFDEDCA1D9C2BDE0B81FC /* Venue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Venue.swift; sourceTree = "<group>"; };
+		552DE27D36B9946591D6DE35 /* VenueCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VenueCard.swift; sourceTree = "<group>"; };
+		60C9B0CD536AEF7746F85C24 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = CoreLocation.framework; sourceTree = "<group>"; };
+		6617B222818264B605D4FBEF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		88A9D16FC8D450D58551014F /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapDiscoveryView.swift; sourceTree = "<group>"; };
+		A11ED4ADAA6ABABE71D444EB /* TappyHourApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TappyHourApp.swift; sourceTree = "<group>"; };
+		AF1885CEA27CC10CD38B9609 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B4B57E7EC7B5E743526A0548 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		BB4E5F70CC15404BE6437AE4 /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
+		D7DA43B705EDC6CC331F850C /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7BA80B4A421A1B9DE6117C1F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C49F1F6BC793846DB3C41BE /* MapKit.framework in Frameworks */,
+				D3DE5EFB4CB2B6264CFC4EC2 /* CoreLocation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		405047AFF61F6B6DD544D07D /* TappyHour */ = {
+			isa = PBXGroup;
+			children = (
+				AF1885CEA27CC10CD38B9609 /* Assets.xcassets */,
+				6617B222818264B605D4FBEF /* Info.plist */,
+				A11ED4ADAA6ABABE71D444EB /* TappyHourApp.swift */,
+				CB6FFA44CA55C58D8AA10B21 /* Data */,
+				B1533D70FED22275B5323838 /* Models */,
+				84D29AE60170251E1B36B8FA /* Theme */,
+				5B8F4ED8A74CD166133CD41D /* ViewModel */,
+				A44B7E6128553AA0BE643FED /* Views */,
+			);
+			path = TappyHour;
+			sourceTree = "<group>";
+		};
+		5B8F4ED8A74CD166133CD41D /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				D7DA43B705EDC6CC331F850C /* AppViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		7354699D96697DC36F6A7DD8 = {
+			isa = PBXGroup;
+			children = (
+				405047AFF61F6B6DD544D07D /* TappyHour */,
+				A8A271A5F1D14CB1E372AEF2 /* Frameworks */,
+				A21522313B5589AF05E5BF9D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		84D29AE60170251E1B36B8FA /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				88A9D16FC8D450D58551014F /* AppTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		A21522313B5589AF05E5BF9D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				083BBAD049FE1058C1659F2C /* TappyHour.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A44B7E6128553AA0BE643FED /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				2EE46CEEECF692A33D20E3CA /* AdminView.swift */,
+				06FD0E3447DCF3B8B7EA4D6C /* ContentView.swift */,
+				2D91C08C21D9592FF8131741 /* ListFeedView.swift */,
+				B4B57E7EC7B5E743526A0548 /* LoginView.swift */,
+				8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */,
+				2ED0E9658ACCDF939C0AFC84 /* SearchOverlayView.swift */,
+				552DE27D36B9946591D6DE35 /* VenueCard.swift */,
+				1486361DCD60BC65094DC222 /* VenueDetailView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A8A271A5F1D14CB1E372AEF2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				60C9B0CD536AEF7746F85C24 /* CoreLocation.framework */,
+				0ECBE2F6D1C244327BB7CEDD /* MapKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		B1533D70FED22275B5323838 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				428FFDEDCA1D9C2BDE0B81FC /* Venue.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		CB6FFA44CA55C58D8AA10B21 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				BB4E5F70CC15404BE6437AE4 /* SampleData.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BE3FACF1ACBEF03549A31E24 /* TappyHour */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 86BC99D3D60A213F85079803 /* Build configuration list for PBXNativeTarget "TappyHour" */;
+			buildPhases = (
+				978DF2BD282D1CBFFFB3A778 /* Sources */,
+				77B084927DF928B215F46312 /* Resources */,
+				7BA80B4A421A1B9DE6117C1F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TappyHour;
+			packageProductDependencies = (
+			);
+			productName = TappyHour;
+			productReference = 083BBAD049FE1058C1659F2C /* TappyHour.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		69ED1AA6146DC4C14B6D47B6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					BE3FACF1ACBEF03549A31E24 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 4F720DB6E6E00E44DAF9155D /* Build configuration list for PBXProject "TappyHour" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7354699D96697DC36F6A7DD8;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A21522313B5589AF05E5BF9D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BE3FACF1ACBEF03549A31E24 /* TappyHour */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		77B084927DF928B215F46312 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DB28346087D7DB8E6D169E49 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		978DF2BD282D1CBFFFB3A778 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB82578130E0BC6321C66888 /* AdminView.swift in Sources */,
+				B4109E16553F7B9BC290A59E /* AppTheme.swift in Sources */,
+				C0019064F7B8295F99001540 /* AppViewModel.swift in Sources */,
+				1FB14468887FADA2DA334F04 /* ContentView.swift in Sources */,
+				26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */,
+				984DD8FB9E890B63B0E301F7 /* LoginView.swift in Sources */,
+				452CCA2AAFDC3413CF1B43E9 /* MapDiscoveryView.swift in Sources */,
+				1B2DB19039A2D0E6925A6F9C /* SampleData.swift in Sources */,
+				D1F53BDB79F490F4394876A7 /* SearchOverlayView.swift in Sources */,
+				F756D67B9ECF52852AB72E88 /* TappyHourApp.swift in Sources */,
+				08DAA995E6AD5E75AFB840F6 /* Venue.swift in Sources */,
+				DA812F0BA849CAD92A1EFE94 /* VenueCard.swift in Sources */,
+				B0972A5A6EEE36C1E441830D /* VenueDetailView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5828FDF47651226D366D8536 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = TappyHour/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_NAME = TappyHour;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		607B17118B702A2FF85A3F6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tappyhour.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		9964979D30A383DC35522004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = TappyHour/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_NAME = TappyHour;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		EB23D5149939AF8C800BFD1D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tappyhour.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4F720DB6E6E00E44DAF9155D /* Build configuration list for PBXProject "TappyHour" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				607B17118B702A2FF85A3F6F /* Debug */,
+				EB23D5149939AF8C800BFD1D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		86BC99D3D60A213F85079803 /* Build configuration list for PBXNativeTarget "TappyHour" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5828FDF47651226D366D8536 /* Debug */,
+				9964979D30A383DC35522004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 69ED1AA6146DC4C14B6D47B6 /* Project object */;
+}

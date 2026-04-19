@@ -1,0 +1,205 @@
+import SwiftUI
+
+struct ContentView: View {
+    @State private var vm = AppViewModel()
+
+    var body: some View {
+        let t = vm.theme
+        ZStack {
+            t.bg.ignoresSafeArea()
+
+            if !vm.showLogin {
+                mainContent
+            }
+
+            // Login overlay
+            if vm.showLogin {
+                LoginView(vm: vm)
+                    .transition(.opacity)
+                    .zIndex(10)
+            }
+
+            // Venue detail overlay
+            if let id = vm.openVenueId, let venue = vm.resolvedVenue(id) {
+                VenueDetailView(venue: venue, vm: vm)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .zIndex(8)
+            }
+
+            // Admin overlay
+            if let id = vm.adminVenueId, let venue = vm.resolvedVenue(id) {
+                AdminView(venue: venue, vm: vm)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .zIndex(9)
+            }
+
+            // Search overlay
+            if vm.isSearchActive {
+                SearchOverlayView(vm: vm)
+                    .transition(.opacity)
+                    .zIndex(7)
+            }
+        }
+        .animation(.spring(duration: 0.3), value: vm.showLogin)
+        .animation(.spring(duration: 0.3), value: vm.openVenueId)
+        .animation(.spring(duration: 0.3), value: vm.adminVenueId)
+        .animation(.easeInOut(duration: 0.2), value: vm.isSearchActive)
+        .preferredColorScheme(vm.isDark ? .dark : .light)
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
+        let t = vm.theme
+        ZStack(alignment: .top) {
+            // Main view content
+            switch vm.viewMode {
+            case .map:
+                MapDiscoveryView(vm: vm)
+                    .ignoresSafeArea()
+            case .list, .feed:
+                ListFeedView(vm: vm)
+                    .background(t.bg)
+                    .safeAreaInset(edge: .top) { Color.clear.frame(height: 70) }
+            }
+
+            // Top search bar
+            topBar(t: t)
+
+            // Manager pill — visible in list/feed views
+            if vm.viewMode != .map {
+                managerPill(t: t)
+            }
+
+            // Map/List toggle pill
+            viewTogglePill(t: t)
+        }
+    }
+
+    private func topBar(t: AppTheme) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                // Search bar
+                Button { vm.isSearchActive = true } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 15))
+                            .foregroundStyle(t.muted)
+
+                        if vm.query.isEmpty {
+                            Text("Search neighborhoods, bars, deals…")
+                                .font(.system(size: 14))
+                                .foregroundStyle(t.muted)
+                        } else {
+                            Text(vm.query)
+                                .font(.system(size: 14))
+                                .foregroundStyle(t.text)
+                        }
+
+                        Spacer()
+
+                        if !vm.query.isEmpty {
+                            Button { vm.query = "" } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(t.muted)
+                            }
+                        } else {
+                            Rectangle()
+                                .fill(t.isDark ? Color.white.opacity(0.12) : Color.black.opacity(0.1))
+                                .frame(width: 1, height: 18)
+                            HStack(spacing: 4) {
+                                Text("Chicago")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(t.text)
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(t.muted)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    .background(
+                        vm.viewMode == .map
+                            ? (t.isDark ? Color(hex: "#1c1b1f").opacity(0.88) : Color.white.opacity(0.95))
+                            : t.card
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .strokeBorder(t.cardBorder, lineWidth: 0.5)
+                    )
+                    .shadow(
+                        color: vm.viewMode == .map ? .black.opacity(0.12) : .clear,
+                        radius: 8, y: 3
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 56)
+            .padding(.bottom, 14)
+        }
+        .background(
+            vm.viewMode != .map
+                ? t.bg.opacity(1)
+                : .clear
+        )
+    }
+
+    private func viewTogglePill(t: AppTheme) -> some View {
+        VStack {
+            Spacer()
+            Button {
+                withAnimation(.spring(duration: 0.3)) {
+                    vm.viewMode = vm.viewMode == .map ? .list : .map
+                    if vm.viewMode == .map { vm.sheetSize = .half }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: vm.viewMode == .map ? "list.bullet" : "map")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text(vm.viewMode == .map ? "List" : "Map")
+                        .font(.system(size: 14, weight: .semibold))
+                        .tracking(-0.1)
+                }
+                .foregroundStyle(vm.isDark ? Color(hex: "#1a1008") : .white)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 11)
+                .background(vm.isDark ? t.accent : Color(hex: "#1a1512"))
+                .clipShape(Capsule())
+                .shadow(
+                    color: vm.isDark ? t.accent.opacity(0.4) : Color.black.opacity(0.25),
+                    radius: 12, y: 4
+                )
+            }
+            .padding(.bottom, 30)
+        }
+    }
+
+    private func managerPill(t: AppTheme) -> some View {
+        VStack {
+            HStack {
+                Spacer()
+                Button { vm.adminVenueId = "v1" } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "gear")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Manager")
+                            .font(.system(size: 11, weight: .semibold))
+                            .tracking(0.3)
+                    }
+                    .foregroundStyle(t.accent)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 6)
+                    .background(t.accent.opacity(0.12))
+                    .clipShape(Capsule())
+                    .overlay(Capsule().strokeBorder(t.accent.opacity(0.33), lineWidth: 0.5))
+                }
+                .padding(.trailing, 16)
+                .padding(.top, 130)
+            }
+            Spacer()
+        }
+    }
+}
