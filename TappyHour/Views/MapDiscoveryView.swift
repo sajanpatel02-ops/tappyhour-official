@@ -13,11 +13,16 @@ struct MapDiscoveryView: View {
 
     private let peekH: CGFloat = 170
     private let halfH: CGFloat = 420
-    private let fullH: CGFloat = 720
 
-    private var sheetH: CGFloat {
+    private func fullH(_ geo: GeometryProxy) -> CGFloat {
+        // Reserve 220pt at top: ~59pt dynamic island + 56pt padding + 46pt search + 14pt + 45pt buffer
+        // This ensures the sheet header sits visibly below the search bar on all devices.
+        geo.size.height - 220
+    }
+
+    private func sheetH(_ geo: GeometryProxy) -> CGFloat {
         switch vm.sheetSize {
-        case .peek: peekH; case .half: halfH; case .full: fullH
+        case .peek: peekH; case .half: halfH; case .full: fullH(geo)
         }
     }
 
@@ -71,8 +76,8 @@ struct MapDiscoveryView: View {
                             .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
                     }
                     .padding(.trailing, 14)
-                    .padding(.bottom, sheetH + 16)
-                    .animation(.spring(response: 0.32), value: sheetH)
+                    .padding(.bottom, sheetH(geo) + 16)
+                    .animation(.spring(response: 0.32), value: sheetH(geo))
                 }
                 .frame(maxHeight: .infinity, alignment: .bottom)
 
@@ -84,7 +89,7 @@ struct MapDiscoveryView: View {
 
     @ViewBuilder
     private func bottomSheet(t: AppTheme, geo: GeometryProxy) -> some View {
-        let currentH = max(peekH, min(fullH, sheetH + dragOffset))
+        let currentH = max(peekH, min(fullH(geo), sheetH(geo) + dragOffset))
         VStack(spacing: 0) {
             // Handle
             Capsule()

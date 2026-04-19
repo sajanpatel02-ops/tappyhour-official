@@ -59,16 +59,11 @@ struct ContentView: View {
             case .list, .feed:
                 ListFeedView(vm: vm)
                     .background(t.bg)
-                    .safeAreaInset(edge: .top) { Color.clear.frame(height: 70) }
+                    .safeAreaInset(edge: .top) { Color.clear.frame(height: 130) }
             }
 
             // Top search bar
             topBar(t: t)
-
-            // Manager pill — visible in list/feed views
-            if vm.viewMode != .map {
-                managerPill(t: t)
-            }
 
             // Map/List toggle pill
             viewTogglePill(t: t)
@@ -177,29 +172,4 @@ struct ContentView: View {
         }
     }
 
-    private func managerPill(t: AppTheme) -> some View {
-        VStack {
-            HStack {
-                Spacer()
-                Button { vm.adminVenueId = "v1" } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 11, weight: .semibold))
-                        Text("Manager")
-                            .font(.system(size: 11, weight: .semibold))
-                            .tracking(0.3)
-                    }
-                    .foregroundStyle(t.accent)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 6)
-                    .background(t.accent.opacity(0.12))
-                    .clipShape(Capsule())
-                    .overlay(Capsule().strokeBorder(t.accent.opacity(0.33), lineWidth: 0.5))
-                }
-                .padding(.trailing, 16)
-                .padding(.top, 130)
-            }
-            Spacer()
-        }
-    }
 }
