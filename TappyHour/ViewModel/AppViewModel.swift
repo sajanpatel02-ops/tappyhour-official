@@ -105,8 +105,10 @@ class AppViewModel {
     func loadVenues() async {
         isLoading = true; loadError = nil
         do {
-            let remote = try await VenueRepository.fetchAll()
-            if !remote.isEmpty { venues = remote }
+            // Server is source of truth — always overwrite, even if empty.
+            // The old `if !remote.isEmpty` guard kept stale/deleted venues
+            // and sample data alive when the DB was cleared.
+            venues = try await VenueRepository.fetchAll()
         } catch {
             loadError = "\(error)"
             print("VenueRepository.fetchAll failed:", error)
