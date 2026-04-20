@@ -163,6 +163,10 @@ struct AdminView: View {
             hasChanges = true
             importNotes = notes
             showingImportSheet = false
+            // Persist the source URL so the venue detail can link back to it.
+            // Fire-and-forget: failure here shouldn't block the import.
+            let src = importURL.trimmingCharacters(in: .whitespaces)
+            Task { try? await VenueRepository.setDealsSourceUrl(venueId: venue.id, url: src) }
             if let first = DayKey.allCases.first(where: { parsed[$0] != nil }) {
                 selectedDay = first
             }

@@ -4,6 +4,7 @@ struct VenueDetailView: View {
     let venue: Venue
     @Bindable var vm: AppViewModel
     @State private var selectedDay: DayKey = TODAY
+    @State private var presentedURL: PresentedURL? = nil
     @Environment(\.openURL) private var openURL
 
     private var t: AppTheme { vm.theme }
@@ -80,11 +81,16 @@ struct VenueDetailView: View {
         }
         .ignoresSafeArea(edges: .top)
         .transition(.move(edge: .trailing))
+        .sheet(item: $presentedURL) { item in
+            SafariView(url: item.url)
+                .ignoresSafeArea()
+        }
     }
 
     // MARK: - Hero
     private var heroSection: some View {
         ZStack {
+            // Fallback gradient (shown while photo loads or if there's no URL)
             LinearGradient(
                 colors: vm.isDark
                     ? [Color(hex: "#2a1f3a"), Color(hex: "#130d1c")]
@@ -96,22 +102,50 @@ struct VenueDetailView: View {
                 center: UnitPoint(x: 0.3, y: 0.2),
                 startRadius: 0, endRadius: 200
             )
-            // Subtle texture
-            Canvas { ctx, size in
-                for row in stride(from: 0, to: size.height, by: 20) {
-                    for col in stride(from: 0, to: size.width, by: 20) {
-                        let rect = CGRect(x: col, y: row, width: 10, height: 10)
-                        ctx.opacity = vm.isDark ? 0.03 : 0.03
-                        ctx.fill(Path(rect), with: .color(vm.isDark ? .white : .black))
+
+            if let urlString = venue.photoUrl, let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let img):
+                        img.resizable()
+                           .scaledToFill()
+                           .frame(maxWidth: .infinity, maxHeight: .infinity)
+                           .clipped()
+                    case .empty:
+                        ProgressView().tint(t.muted)
+                    case .failure:
+                        Text("[ \(venue.cuisine) — interior photo ]")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(t.muted)
+                            .kerning(1)
+                    @unknown default:
+                        EmptyView()
                     }
                 }
+                // Dark gradient at top so back/share/heart icons stay readable
+                LinearGradient(
+                    colors: [.black.opacity(0.35), .clear],
+                    startPoint: .top, endPoint: .center
+                )
+            } else {
+                // No URL: show the subtle texture + placeholder label
+                Canvas { ctx, size in
+                    for row in stride(from: 0, to: size.height, by: 20) {
+                        for col in stride(from: 0, to: size.width, by: 20) {
+                            let rect = CGRect(x: col, y: row, width: 10, height: 10)
+                            ctx.opacity = 0.03
+                            ctx.fill(Path(rect), with: .color(vm.isDark ? .white : .black))
+                        }
+                    }
+                }
+                Text("[ \(venue.cuisine) — interior photo ]")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(t.muted)
+                    .kerning(1)
             }
-            Text("[ \(venue.cuisine) — interior photo ]")
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(t.muted)
-                .kerning(1)
         }
         .frame(height: 280)
+        .clipped()
     }
 
     // MARK: - Detail Content
@@ -145,17 +179,35 @@ struct VenueDetailView: View {
 
             divider
 
-            // Last-updated stamp sits right above the weekday picker so admins
-            // can tell at a glance whether the posted deals are fresh.
-            if let updated = venue.scheduleUpdatedAt {
-                HStack(spacing: 6) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 10))
-                    Text("Deals updated \(relativeUpdated(updated))")
-                        .font(.system(size: 11))
+            // Last-updated stamp + "View menu online" link sit right above the
+            // weekday picker so users can gauge freshness and jump to the source.
+            if venue.scheduleUpdatedAt != nil || venue.dealsSourceUrl != nil {
+                HStack(spacing: 10) {
+                    if let updated = venue.scheduleUpdatedAt {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.system(size: 10))
+                            Text("Updated \(relativeUpdated(updated))")
+                                .font(.system(size: 11))
+                        }
+                        .foregroundStyle(t.muted)
+                    }
                     Spacer()
+                    if let src = venue.dealsSourceUrl,
+                       let url = URL(string: src) {
+                        Button {
+                            presentedURL = PresentedURL(url: url)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text("View menu online")
+                                    .font(.system(size: 11, weight: .medium))
+                                Image(systemName: "arrow.up.right.square")
+                                    .font(.system(size: 10, weight: .medium))
+                            }
+                            .foregroundStyle(t.accent)
+                        }
+                    }
                 }
-                .foregroundStyle(t.muted)
                 .padding(.horizontal, 20)
                 .padding(.top, 14)
             }

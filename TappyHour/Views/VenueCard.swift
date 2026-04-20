@@ -37,6 +37,8 @@ struct VenueCard: View {
 
     private var venueThumbnail: some View {
         ZStack {
+            // Fallback gradient + cuisine label (shown while photo loads or
+            // if this venue has no photo URL).
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(
                     LinearGradient(
@@ -46,13 +48,32 @@ struct VenueCard: View {
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 )
-            Text(venue.cuisine)
-                .font(.system(size: 9, design: .monospaced))
-                .foregroundStyle(t.muted)
-                .multilineTextAlignment(.center)
-                .padding(4)
+
+            if let s = venue.photoUrl, let url = URL(string: s) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let img):
+                        img.resizable().scaledToFill()
+                    case .empty, .failure:
+                        Text(venue.cuisine)
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundStyle(t.muted)
+                            .multilineTextAlignment(.center)
+                            .padding(4)
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+            } else {
+                Text(venue.cuisine)
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundStyle(t.muted)
+                    .multilineTextAlignment(.center)
+                    .padding(4)
+            }
         }
         .frame(width: 84, height: 84)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var headerRow: some View {

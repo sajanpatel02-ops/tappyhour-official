@@ -30,6 +30,7 @@ private struct VenueRow: Decodable {
     let lat: Double?
     let lng: Double?
     let schedule_updated_at: String?
+    let deals_source_url: String?
 }
 
 private struct ScheduleRow: Decodable {
@@ -147,7 +148,9 @@ enum VenueRepository {
             coordinate: CLLocationCoordinate2D(latitude: v.lat ?? 0, longitude: v.lng ?? 0),
             tags: v.tags ?? [],
             schedule: dict,
-            scheduleUpdatedAt: parseTimestamp(v.schedule_updated_at)
+            scheduleUpdatedAt: parseTimestamp(v.schedule_updated_at),
+            photoUrl: v.photo_url,
+            dealsSourceUrl: v.deals_source_url
         )
     }
 
@@ -192,6 +195,15 @@ enum VenueRepository {
             .execute()
             .value
         return id
+    }
+
+    /// Save the URL that was used to extract this venue's happy hour info.
+    /// Shown as a "View menu online" link on the detail view.
+    static func setDealsSourceUrl(venueId: String, url: String) async throws {
+        struct Args: Encodable { let p_venue_id: String; let p_url: String }
+        _ = try await Supa.client
+            .rpc("set_deals_source_url", params: Args(p_venue_id: venueId, p_url: url))
+            .execute()
     }
 
     /// Publish (replace) the entire schedule for a venue.

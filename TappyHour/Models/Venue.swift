@@ -48,6 +48,8 @@ struct Venue: Identifiable {
     // Keys present = has happy hour that day; missing key = no happy hour
     var schedule: [DayKey: DaySchedule]
     var scheduleUpdatedAt: Date? = nil
+    var photoUrl: String? = nil
+    var dealsSourceUrl: String? = nil
 
     var isEndingSoon: Bool { endsIn <= 30 }
     var shortName: String { name.components(separatedBy: " ").last ?? name }
