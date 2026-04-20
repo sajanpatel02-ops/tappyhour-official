@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Background: deep plum to match app bg -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="42%" r="60%">
+      <stop offset="0%" stop-color="#2a1f3a"/>
+      <stop offset="100%" stop-color="#0b0910"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#glow)"/>
+
+  <!-- Monogram: t / h in Georgia Italic, amber slash -->
+  <g font-family="Georgia, 'Times New Roman', serif" font-style="italic" text-anchor="middle">
+    <text x="320" y="680" font-size="640" font-weight="700" fill="#f5ead6" letter-spacing="-16">t</text>
+    <text x="512" y="640" font-size="520" font-weight="400" fill="#f2a03d">/</text>
+    <text x="720" y="680" font-size="640" font-weight="400" fill="#f5ead6" letter-spacing="-16">h</text>
+  </g>
+</svg>

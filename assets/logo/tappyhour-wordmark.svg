@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 220">
+  <g font-family="Georgia, 'Times New Roman', serif" font-style="italic">
+    <text x="20"  y="160" font-size="180" font-weight="700" fill="#f5ead6" letter-spacing="-4">tappy</text>
+    <text x="530" y="150" font-size="150" font-weight="400" fill="#f2a03d">/</text>
+    <text x="610" y="160" font-size="180" font-weight="400" fill="#f5ead6" letter-spacing="-4">hour</text>
+  </g>
+</svg>
