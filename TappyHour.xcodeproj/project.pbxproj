@@ -18,6 +18,7 @@
 		452CCA2AAFDC3413CF1B43E9 /* MapDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */; };
 		4C49F1F6BC793846DB3C41BE /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0ECBE2F6D1C244327BB7CEDD /* MapKit.framework */; };
 		5FCF8B8560173C84ADC282F1 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C809A4966B8B7CF690A7BFB6 /* LocationManager.swift */; };
+		85BDF49DE3EDFE4BAD812E2E /* ExtractService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C410EC0E1F603783418DBF /* ExtractService.swift */; };
 		984DD8FB9E890B63B0E301F7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B57E7EC7B5E743526A0548 /* LoginView.swift */; };
 		9E56AEDD29FB1B38E1E10445 /* AddVenueSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892B4D63CE70E3039F834E6E /* AddVenueSheet.swift */; };
 		B0972A5A6EEE36C1E441830D /* VenueDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1486361DCD60BC65094DC222 /* VenueDetailView.swift */; };
@@ -46,6 +47,7 @@
 		552DE27D36B9946591D6DE35 /* VenueCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VenueCard.swift; sourceTree = "<group>"; };
 		60C9B0CD536AEF7746F85C24 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = CoreLocation.framework; sourceTree = "<group>"; };
 		6617B222818264B605D4FBEF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		67C410EC0E1F603783418DBF /* ExtractService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtractService.swift; sourceTree = "<group>"; };
 		88A9D16FC8D450D58551014F /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		892B4D63CE70E3039F834E6E /* AddVenueSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddVenueSheet.swift; sourceTree = "<group>"; };
 		8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapDiscoveryView.swift; sourceTree = "<group>"; };
@@ -169,6 +171,7 @@
 			isa = PBXGroup;
 			children = (
 				1439799852698520056EE7A2 /* AuthService.swift */,
+				67C410EC0E1F603783418DBF /* ExtractService.swift */,
 				C809A4966B8B7CF690A7BFB6 /* LocationManager.swift */,
 				166BFDED1DC223435E56B16F /* Supa.swift */,
 				A185ECACCAEE357B8736220C /* SupabaseConfig.swift */,
@@ -258,6 +261,7 @@
 				C0019064F7B8295F99001540 /* AppViewModel.swift in Sources */,
 				2105BA459E020B7869E69112 /* AuthService.swift in Sources */,
 				1FB14468887FADA2DA334F04 /* ContentView.swift in Sources */,
+				85BDF49DE3EDFE4BAD812E2E /* ExtractService.swift in Sources */,
 				26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */,
 				5FCF8B8560173C84ADC282F1 /* LocationManager.swift in Sources */,
 				984DD8FB9E890B63B0E301F7 /* LoginView.swift in Sources */,

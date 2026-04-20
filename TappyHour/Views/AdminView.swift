@@ -10,6 +10,12 @@ struct AdminView: View {
     @State private var isPublishing = false
     @State private var publishError: String? = nil
 
+    @State private var showingImportSheet = false
+    @State private var importURL = ""
+    @State private var isImporting = false
+    @State private var importError: String? = nil
+    @State private var importNotes: String? = nil
+
     private var t: AppTheme { vm.theme }
     private var dayData: DaySchedule? { schedule[selectedDay] }
 
@@ -28,6 +34,7 @@ struct AdminView: View {
                 t.separator.frame(height: 0.5)
                 ScrollView {
                     VStack(spacing: 16) {
+                        importBanner
                         dayToggle
                         if dayData != nil {
                             hoursAndHeadline
@@ -42,6 +49,126 @@ struct AdminView: View {
             VStack { Spacer(); publishBar }.ignoresSafeArea(edges: .bottom)
         }
         .transition(.move(edge: .bottom))
+        .sheet(isPresented: $showingImportSheet) { importSheet }
+    }
+
+    // MARK: - Import from URL
+
+    private var importBanner: some View {
+        Button {
+            importURL = venue.schedule.isEmpty ? "" : importURL
+            showingImportSheet = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "wand.and.stars")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(t.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Import from website")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(t.text)
+                    Text("Auto-fill the schedule from a URL, then review")
+                        .font(.system(size: 11))
+                        .foregroundStyle(t.muted)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(t.muted)
+            }
+            .padding(14)
+            .background(t.card)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(t.accent.opacity(0.25), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var importSheet: some View {
+        NavigationStack {
+            ZStack {
+                t.bg.ignoresSafeArea()
+                VStack(alignment: .leading, spacing: 18) {
+                    Text("Paste the bar's website or happy hour page. We'll extract the schedule and you can review it before saving.")
+                        .font(.system(size: 14))
+                        .foregroundStyle(t.muted)
+
+                    TextField("https://example.com/happy-hour", text: $importURL)
+                        .textContentType(.URL)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                        .autocorrectionDisabled(true)
+                        .padding(12)
+                        .background(t.card)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    if let err = importError {
+                        Text(err)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.red)
+                    }
+
+                    Button {
+                        Task { await runImport() }
+                    } label: {
+                        HStack {
+                            if isImporting { ProgressView().tint(vm.isDark ? .black : .white) }
+                            Text(isImporting ? "Extracting…" : "Import")
+                                .font(.system(size: 15, weight: .semibold))
+                        }
+                        .foregroundStyle(vm.isDark ? Color(hex: "#1a1008") : .white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(t.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isImporting || importURL.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .opacity((isImporting || importURL.trimmingCharacters(in: .whitespaces).isEmpty) ? 0.5 : 1)
+
+                    Spacer()
+                }
+                .padding(20)
+                .padding(.top, 10)
+            }
+            .navigationTitle("Import schedule")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { showingImportSheet = false }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    @MainActor
+    private func runImport() async {
+        importError = nil
+        isImporting = true
+        defer { isImporting = false }
+        do {
+            let (parsed, notes, _) = try await ExtractService.extract(
+                url: importURL.trimmingCharacters(in: .whitespaces)
+            )
+            guard !parsed.isEmpty else {
+                importError = "Couldn't find a happy hour schedule on that page."
+                return
+            }
+            schedule = parsed
+            hasChanges = true
+            importNotes = notes
+            showingImportSheet = false
+            if let first = DayKey.allCases.first(where: { parsed[$0] != nil }) {
+                selectedDay = first
+            }
+        } catch {
+            importError = error.localizedDescription
+        }
     }
 
     // MARK: - Nav Bar
