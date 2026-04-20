@@ -229,19 +229,53 @@ private struct BottomSheetView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 10)
 
-            ScrollView {
-                LazyVStack(spacing: 10) {
-                    ForEach(vm.filteredVenues) { venue in
-                        VenueCard(venue: venue, vm: vm).padding(.horizontal, 14)
-                    }
-                }
-                .padding(.bottom, 100)
-            }
-            .scrollDisabled(vm.sheetSize != .full)
-            .scrollBounceBehavior(.basedOnSize)
+            scrollList
         }
     }
+
+    @ViewBuilder
+    private var scrollList: some View {
+        let list = ScrollView {
+            LazyVStack(spacing: 10) {
+                ForEach(vm.filteredVenues) { venue in
+                    VenueCard(venue: venue, vm: vm).padding(.horizontal, 14)
+                }
+            }
+            .padding(.bottom, 100)
+        }
+        .scrollDisabled(vm.sheetSize != .full)
+        .scrollBounceBehavior(.basedOnSize)
+
+        if vm.sheetSize != .full {
+            // At peek/half: swipe up anywhere on list → expand; swipe down → collapse.
+            // simultaneousGesture preserves card tap handling (tap ≠ drag).
+            list.simultaneousGesture(swipeToResize)
+        } else {
+            // At full: ScrollView owns the gesture; user collapses via the handle.
+            list
+        }
+    }
+
+    private var swipeToResize: some Gesture {
+        DragGesture(minimumDistance: 10)
+            .onEnded { val in
+                let dy = val.translation.height
+                let vy = val.predictedEndTranslation.height  // accounts for fling velocity
+                guard abs(dy) > 10 else { return }
+                let intent = (abs(vy) > abs(dy)) ? vy : dy   // prefer fling direction
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    if intent < 0 {
+                        // swipe up → expand one step
+                        vm.sheetSize = vm.sheetSize == .peek ? .half : .full
+                    } else {
+                        // swipe down → collapse one step
+                        vm.sheetSize = vm.sheetSize == .full ? .half : .peek
+                    }
+                }
+            }
+    }
 }
+
 
 // MARK: - Venue Pin
 struct VenuePinView: View {
