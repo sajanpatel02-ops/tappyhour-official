@@ -9,8 +9,6 @@ struct MapDiscoveryView: View {
             span: MKCoordinateSpan(latitudeDelta: 0.065, longitudeDelta: 0.065)
         )
     )
-    @State private var dragOffset: CGFloat = 0
-
     private let peekH: CGFloat = 170
     private let halfH: CGFloat = 420
 
@@ -24,12 +22,6 @@ struct MapDiscoveryView: View {
         switch vm.sheetSize {
         case .peek: peekH; case .half: halfH; case .full: fullH(geo)
         }
-    }
-
-    // The sheet is always sized to fullH; we slide it with offset.
-    // offsetY = how far DOWN from fullH we push the sheet.
-    private func restingOffset(_ geo: GeometryProxy) -> CGFloat {
-        fullH(geo) - sheetH(geo)
     }
 
     var body: some View {
@@ -89,8 +81,14 @@ struct MapDiscoveryView: View {
                     .transition(.opacity)
                 }
 
-                // Bottom sheet
-                bottomSheet(t: t, geo: geo)
+                // Bottom sheet (isolated into its own view so drag state
+                // doesn't re-render the Map / annotations)
+                BottomSheetView(
+                    vm: vm,
+                    peekH: peekH,
+                    halfH: halfH,
+                    fullH: fullH(geo)
+                )
             }
             .onChange(of: vm.query) { _, _ in recenterToFilter() }
         }
@@ -127,10 +125,27 @@ struct MapDiscoveryView: View {
         }
     }
 
-    @ViewBuilder
-    private func bottomSheet(t: AppTheme, geo: GeometryProxy) -> some View {
-        // Sheet is sized once to fullH and slid via offset — cheap, no relayout.
-        let offsetY = max(0, min(fullH(geo) - peekH, restingOffset(geo) + dragOffset))
+}
+
+// MARK: - Bottom Sheet (isolated view so drag state doesn't invalidate the Map)
+private struct BottomSheetView: View {
+    @Bindable var vm: AppViewModel
+    let peekH: CGFloat
+    let halfH: CGFloat
+    let fullH: CGFloat
+
+    @State private var dragOffset: CGFloat = 0
+
+    private var sheetH: CGFloat {
+        switch vm.sheetSize {
+        case .peek: peekH; case .half: halfH; case .full: fullH
+        }
+    }
+    private var restingOffset: CGFloat { fullH - sheetH }
+
+    var body: some View {
+        let t = vm.theme
+        let offsetY = max(0, min(fullH - peekH, restingOffset + dragOffset))
 
         let sheetDrag = DragGesture(minimumDistance: 4)
             .onChanged { dragOffset = $0.translation.height }
@@ -147,7 +162,6 @@ struct MapDiscoveryView: View {
             }
 
         VStack(spacing: 0) {
-            // Handle
             Capsule()
                 .fill(vm.isDark ? Color.white.opacity(0.2) : Color.black.opacity(0.15))
                 .frame(width: 36, height: 5)
@@ -163,6 +177,7 @@ struct MapDiscoveryView: View {
                         }
                     }
                 }
+                .gesture(sheetDrag)
 
             if let id = vm.selectedVenueId, vm.sheetSize == .peek, let venue = vm.venue(id) {
                 VenueCard(venue: venue, vm: vm)
@@ -170,27 +185,24 @@ struct MapDiscoveryView: View {
                     .padding(.bottom, 20)
                     .transition(.opacity)
             } else {
-                sheetListContent(t: t)
+                listContent(t: t, dragGesture: sheetDrag)
             }
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: fullH(geo), alignment: .top)
+        .frame(height: fullH, alignment: .top)
         .background(
             t.sheetBg
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                 .ignoresSafeArea(edges: .bottom)
                 .shadow(color: .black.opacity(0.18), radius: 20, y: -4)
         )
-        // When not full, the whole sheet drags to resize. When full, only the handle does,
-        // so the list scrolls normally. (Individual card taps still work because minimumDistance: 4.)
-        .simultaneousGesture(sheetDrag, including: vm.sheetSize == .full ? .subviews : .all)
         .offset(y: offsetY)
         .animation(.spring(response: 0.32, dampingFraction: 0.85), value: vm.sheetSize)
     }
 
     @ViewBuilder
-    private func sheetListContent(t: AppTheme) -> some View {
+    private func listContent(t: AppTheme, dragGesture: some Gesture) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .lastTextBaseline) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -211,6 +223,8 @@ struct MapDiscoveryView: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 10)
+            .contentShape(Rectangle())
+            .gesture(dragGesture)
 
             ScrollView {
                 LazyVStack(spacing: 10) {
