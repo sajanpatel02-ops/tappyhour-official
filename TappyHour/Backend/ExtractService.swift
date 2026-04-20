@@ -53,7 +53,7 @@ enum ExtractService {
                 hours: formatHours(start: d.start, end: d.end),
                 headline: trimHeadline(d.headline),
                 menu: d.items.map {
-                    HappyHourItem(item: $0.name, normal: $0.normal, deal: $0.deal)
+                    HappyHourItem(item: trimItemName($0.name), normal: $0.normal, deal: $0.deal)
                 }
             )
         }
@@ -68,6 +68,20 @@ enum ExtractService {
         case "fri": .fr; case "sat": .sa; case "sun": .su
         default: nil
         }
+    }
+
+    /// Trim long LLM-dumped item names. Cuts parenthetical brand lists first,
+    /// then hard-caps at 28 chars so menu rows stay on one line.
+    private static func trimItemName(_ s: String) -> String {
+        var out = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Drop "(...)" suffix like "Bottles (Miller Lite, Bud Light)"
+        if let paren = out.firstIndex(of: "(") {
+            out = String(out[..<paren]).trimmingCharacters(in: .whitespaces)
+        }
+        if out.count > 28 {
+            out = String(out.prefix(27)).trimmingCharacters(in: .whitespaces) + "…"
+        }
+        return out
     }
 
     /// Trim long LLM-dumped headlines down to ~50 chars for readable display.

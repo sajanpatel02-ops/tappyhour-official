@@ -65,7 +65,9 @@ Rules:
 - If no happy hour exists on the page, return { "found": false, "confidence": "high", "notes": "<why>", "days": [] }.
 - Price numbers only — drop the "$".
 - If the page has happy hour but no per-item menu, still return days with empty "items" arrays.
-- Do not invent days. Only include days explicitly mentioned.`;
+- Do not invent days. Only include days explicitly mentioned.
+- LIMIT to at most 8 items per day — pick the most representative/headline deals. If there are many similar items (e.g. 10 different bottled beers at the same price), collapse them into one entry like { "name": "Domestic bottles", ... }.
+- Item "name" MUST be ≤ 28 characters. Use short category labels like "Domestic bottles", "Well drinks", "House wine", "Drafts", "IPAs". DO NOT list brand names in parentheses. Never exceed 28 chars.`;
 
 interface ClaudeResponse {
   content: Array<{ type: string; text?: string }>;
@@ -93,22 +95,21 @@ Deno.serve(async (req) => {
   }
 
   // 1. Fetch the page
-  let html: string;
+  let fetched: Response;
   try {
-    const res = await fetch(url, {
+    fetched = await fetch(url, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17 Safari/605.1.15",
       },
       signal: AbortSignal.timeout(15000),
     });
-    if (!res.ok) {
+    if (!fetched.ok) {
       return json(
-        { found: false, confidence: "high", notes: `Page returned ${res.status}`, days: [] },
+        { found: false, confidence: "high", notes: `Page returned ${fetched.status}`, days: [] },
         200,
       );
     }
-    html = await res.text();
   } catch (err) {
     return json(
       {
@@ -121,16 +122,36 @@ Deno.serve(async (req) => {
     );
   }
 
-  // 2. Reduce to readable text, cap length so we don't blow token budget
-  let text = htmlToText(html);
-  const MAX_CHARS = 12000; // ≈ 3k tokens
-  if (text.length > MAX_CHARS) text = text.slice(0, MAX_CHARS);
+  const contentType = (fetched.headers.get("content-type") || "").toLowerCase();
+  const isPDF = contentType.includes("application/pdf") || url.toLowerCase().endsWith(".pdf");
 
-  if (text.length < 100) {
-    return json(
-      { found: false, confidence: "high", notes: "Page had almost no readable text (probably SPA or image-only).", days: [] },
-      200,
-    );
+  // 2. Build the Claude message content — either a PDF document or extracted text
+  // deno-lint-ignore no-explicit-any
+  let userContent: any;
+
+  if (isPDF) {
+    // Claude natively reads PDFs via base64 document content block
+    const buf = await fetched.arrayBuffer();
+    const base64 = arrayBufferToBase64(buf);
+    userContent = [
+      {
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: base64 },
+      },
+      { type: "text", text: `URL: ${url}\n\nExtract happy hour info from this PDF. Return JSON only.` },
+    ];
+  } else {
+    const html = await fetched.text();
+    let text = htmlToText(html);
+    const MAX_CHARS = 12000;
+    if (text.length > MAX_CHARS) text = text.slice(0, MAX_CHARS);
+    if (text.length < 100) {
+      return json(
+        { found: false, confidence: "high", notes: "Page had almost no readable text (probably SPA or image-only).", days: [] },
+        200,
+      );
+    }
+    userContent = `URL: ${url}\n\nPage text:\n---\n${text}\n---\n\nReturn JSON only.`;
   }
 
   // 3. Ask Claude
@@ -145,16 +166,11 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5",
-        max_tokens: 2000,
+        max_tokens: 8000,
         system: EXTRACTION_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: `URL: ${url}\n\nPage text:\n---\n${text}\n---\n\nReturn JSON only.`,
-          },
-        ],
+        messages: [{ role: "user", content: userContent }],
       }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(45000),
     });
     if (!resp.ok) {
       const errText = await resp.text();
@@ -168,18 +184,47 @@ Deno.serve(async (req) => {
     return json({ error: `Claude call failed: ${err instanceof Error ? err.message : String(err)}` }, 502);
   }
 
-  // 4. Parse and return. Tolerate stray ```json fences just in case.
-  const cleaned = claudeJSON.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-  try {
-    const parsed = JSON.parse(cleaned);
-    return json(parsed, 200);
-  } catch {
-    return json(
-      { error: "Claude returned non-JSON", raw: claudeJSON.slice(0, 500) },
-      502,
-    );
+  // 4. Parse and return. Tolerate ```json fences AND stray prose —
+  // Claude occasionally wraps PDF responses in "Here is the JSON:" etc.
+  // Strategy: strip fences, then if that fails, slice from first { to last }.
+  const stripped = claudeJSON
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  const tryParse = (s: string) => {
+    try { return JSON.parse(s); } catch { return null; }
+  };
+
+  let parsed = tryParse(stripped);
+  if (!parsed) {
+    const first = stripped.indexOf("{");
+    const last = stripped.lastIndexOf("}");
+    if (first !== -1 && last > first) {
+      parsed = tryParse(stripped.slice(first, last + 1));
+    }
   }
+
+  if (parsed) return json(parsed, 200);
+  // Log to edge function logs so we can diagnose (Supabase test UI hides body fields)
+  console.error("Claude returned non-JSON. Raw output:", claudeJSON);
+  return json(
+    { error: "Claude returned non-JSON", raw: claudeJSON.slice(0, 800) },
+    502,
+  );
 });
+
+// Convert ArrayBuffer → base64 in chunks so we don't blow the call stack on
+// multi-MB PDFs (String.fromCharCode(...bytes) fails around ~100k args).
+function arrayBufferToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  const CHUNK = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
