@@ -62,29 +62,32 @@ struct MapDiscoveryView: View {
                 .onTapGesture { withAnimation { vm.selectPin(nil) } }
                 .ignoresSafeArea()
 
-                // Locate FAB
-                HStack {
-                    Spacer()
-                    Button {
-                        withAnimation(.spring(duration: 0.4)) {
-                            position = .region(MKCoordinateRegion(
-                                center: CLLocationCoordinate2D(latitude: 41.888, longitude: -87.645),
-                                span: MKCoordinateSpan(latitudeDelta: 0.065, longitudeDelta: 0.065)
-                            ))
+                // Locate FAB — hidden when sheet is full to avoid colliding with search bar
+                if vm.sheetSize != .full {
+                    HStack {
+                        Spacer()
+                        Button {
+                            withAnimation(.spring(duration: 0.4)) {
+                                position = .region(MKCoordinateRegion(
+                                    center: CLLocationCoordinate2D(latitude: 41.888, longitude: -87.645),
+                                    span: MKCoordinateSpan(latitudeDelta: 0.065, longitudeDelta: 0.065)
+                                ))
+                            }
+                        } label: {
+                            Image(systemName: "location")
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundStyle(t.text)
+                                .frame(width: 44, height: 44)
+                                .background(t.card)
+                                .clipShape(Circle())
+                                .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
                         }
-                    } label: {
-                        Image(systemName: "location")
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundStyle(t.text)
-                            .frame(width: 44, height: 44)
-                            .background(t.card)
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+                        .padding(.trailing, 14)
+                        .padding(.bottom, sheetH(geo) + 16)
                     }
-                    .padding(.trailing, 14)
-                    .padding(.bottom, sheetH(geo) + 16)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .transition(.opacity)
                 }
-                .frame(maxHeight: .infinity, alignment: .bottom)
 
                 // Bottom sheet
                 bottomSheet(t: t, geo: geo)
@@ -129,40 +132,37 @@ struct MapDiscoveryView: View {
         // Sheet is sized once to fullH and slid via offset — cheap, no relayout.
         let offsetY = max(0, min(fullH(geo) - peekH, restingOffset(geo) + dragOffset))
 
-        VStack(spacing: 0) {
-            // Handle + drag area
-            VStack(spacing: 0) {
-                Capsule()
-                    .fill(vm.isDark ? Color.white.opacity(0.2) : Color.black.opacity(0.15))
-                    .frame(width: 36, height: 5)
-                    .padding(.vertical, 10)
-            }
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
-            .onTapGesture {
+        let sheetDrag = DragGesture(minimumDistance: 4)
+            .onChanged { dragOffset = $0.translation.height }
+            .onEnded { val in
+                let v = val.translation.height
                 withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
-                    switch vm.sheetSize {
-                    case .peek: vm.sheetSize = .half
-                    case .half: vm.sheetSize = .full
-                    case .full: vm.sheetSize = .peek
+                    if v < -60 {
+                        vm.sheetSize = vm.sheetSize == .peek ? .half : .full
+                    } else if v > 60 {
+                        vm.sheetSize = vm.sheetSize == .full ? .half : .peek
                     }
+                    dragOffset = 0
                 }
             }
-            .gesture(
-                DragGesture()
-                    .onChanged { dragOffset = $0.translation.height }
-                    .onEnded { val in
-                        let v = val.translation.height
-                        withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
-                            if v < -60 {
-                                vm.sheetSize = vm.sheetSize == .peek ? .half : .full
-                            } else if v > 60 {
-                                vm.sheetSize = vm.sheetSize == .full ? .half : .peek
-                            }
-                            dragOffset = 0
+
+        VStack(spacing: 0) {
+            // Handle
+            Capsule()
+                .fill(vm.isDark ? Color.white.opacity(0.2) : Color.black.opacity(0.15))
+                .frame(width: 36, height: 5)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                        switch vm.sheetSize {
+                        case .peek: vm.sheetSize = .half
+                        case .half: vm.sheetSize = .full
+                        case .full: vm.sheetSize = .peek
                         }
                     }
-            )
+                }
 
             if let id = vm.selectedVenueId, vm.sheetSize == .peek, let venue = vm.venue(id) {
                 VenueCard(venue: venue, vm: vm)
@@ -182,6 +182,9 @@ struct MapDiscoveryView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .shadow(color: .black.opacity(0.18), radius: 20, y: -4)
         )
+        // When not full, the whole sheet drags to resize. When full, only the handle does,
+        // so the list scrolls normally. (Individual card taps still work because minimumDistance: 4.)
+        .simultaneousGesture(sheetDrag, including: vm.sheetSize == .full ? .subviews : .all)
         .offset(y: offsetY)
         .animation(.spring(response: 0.32, dampingFraction: 0.85), value: vm.sheetSize)
     }
@@ -217,6 +220,8 @@ struct MapDiscoveryView: View {
                 }
                 .padding(.bottom, 100)
             }
+            .scrollDisabled(vm.sheetSize != .full)
+            .scrollBounceBehavior(.basedOnSize)
         }
     }
 }
