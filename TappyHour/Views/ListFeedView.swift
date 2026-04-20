@@ -42,7 +42,9 @@ struct ListFeedView: View {
                 .font(.system(size: 12))
             Spacer()
             if vm.isAdmin { addChip }
-            if vm.canManageAny { managerChip }
+            // Manager chip: non-admin venue managers only. Admins tap any bar
+            // and use the pencil button on its detail view.
+            if vm.canManageAny && !vm.isAdmin { managerChip }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
@@ -62,7 +64,9 @@ struct ListFeedView: View {
             }
             Spacer()
             if vm.isAdmin { addChip }
-            if vm.canManageAny { managerChip }
+            // Manager chip: non-admin venue managers only. Admins tap any bar
+            // and use the pencil button on its detail view.
+            if vm.canManageAny && !vm.isAdmin { managerChip }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)

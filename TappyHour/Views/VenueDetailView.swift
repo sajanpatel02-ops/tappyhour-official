@@ -37,6 +37,22 @@ struct VenueDetailView: View {
                 }
                 Spacer()
                 HStack(spacing: 8) {
+                    // Admin/manager shortcut: edit this specific bar's schedule.
+                    // Avoids the Manager-chip-only-opens-first-bar footgun.
+                    if vm.isAdmin || vm.managedVenueIds.contains(venue.id) {
+                        Button {
+                            vm.openVenueId = nil
+                            vm.adminVenueId = venue.id
+                        } label: {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(t.accent)
+                                .frame(width: 40, height: 40)
+                                .background(t.card.opacity(0.9))
+                                .clipShape(Circle())
+                                .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+                        }
+                    }
                     Button {
                         // Share action
                     } label: {

@@ -212,10 +212,13 @@ private struct BottomSheetContent: View {
                                               fg: t.text, bg: t.card, stroke: t.cardBorder)
                                 }
                             }
-                            if vm.canManageAny {
+                            // Manager chip: only for non-admin managers (jumps
+                            // straight to their one bar). Admins use the pencil
+                            // on each venue detail to edit whichever bar they
+                            // want — no need for a "pick first" shortcut.
+                            if vm.canManageAny && !vm.isAdmin {
                                 Button {
-                                    let firstMine = vm.venues.first(where: { vm.managedVenueIds.contains($0.id) })?.id
-                                    vm.adminVenueId = firstMine ?? (vm.isAdmin ? vm.venues.first?.id : nil)
+                                    vm.adminVenueId = vm.venues.first(where: { vm.managedVenueIds.contains($0.id) })?.id
                                 } label: {
                                     chipLabel(icon: "gear", text: "Manager",
                                               fg: t.accent, bg: t.accent.opacity(0.12),
