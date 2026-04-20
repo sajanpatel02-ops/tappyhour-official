@@ -51,7 +51,9 @@ const EXTRACTION_PROMPT = `You are extracting happy hour information from a bar/
       "end": "HH:MM",                // 24-hour, e.g. "18:00"
       "headline": string,            // short summary like "Half-off wine by the glass"
       "items": [
-        { "name": string, "normal": number, "deal": number }
+        // EITHER numeric: { "name": string, "normal": number, "deal": number }
+        // OR labeled:   { "name": string, "label": string }     // for vague deals
+        { "name": string, "normal": number | null, "deal": number | null, "label": string | null }
       ]
     }
   ]
@@ -61,7 +63,18 @@ Rules:
 - Output MUST be valid JSON. Nothing else.
 - If the page describes "Mon–Fri" or "weekdays", expand to one entry per day (mon, tue, wed, thu, fri).
 - If times are like "3 PM" convert to "15:00". Always pad to HH:MM.
-- If a menu item's normal price isn't listed but only the deal price is, estimate normal as 1.5× deal and round. Put a note.
+- Every item MUST be EITHER numeric OR labeled. An item with normal=null AND deal=null AND label=null is INVALID — never output one.
+- For each menu item, pick ONE format:
+  * NUMERIC — BOTH a specific normal price AND a specific deal price are stated (e.g. "Martini $16, now $8"). Fill "normal" and "deal" as numbers; set "label" to null.
+  * LABELED — anything else: percentages, ranges, "1/2 off", single-price-only, vague deals. Fill "label" with a short human-readable deal string; set "normal" AND "deal" to null.
+- NEVER invent numbers. If a normal price is not explicitly stated, you MUST use LABELED format — do NOT guess a normal price.
+- If only a deal price is given (e.g. "$5 drafts", "$6 wine"), that is LABELED: label="$5", normal=null, deal=null. Do not put the $5 in "deal" — "deal" only fills when you ALSO have a "normal".
+- Label examples: "50% off", "1/2 off", "$6-$12", "$5", "25% off", "2-for-1", "buy one get one".
+- Examples of correct items:
+  * "1/2 off reserve wine" → { "name": "Reserve wine", "normal": null, "deal": null, "label": "1/2 off" }
+  * "$6-$12 small bites" → { "name": "Small bites", "normal": null, "deal": null, "label": "$6-$12" }
+  * "$5 drafts" → { "name": "Drafts", "normal": null, "deal": null, "label": "$5" }
+  * "Martini normally $16, happy hour $8" → { "name": "Martini", "normal": 16, "deal": 8, "label": null }
 - If no happy hour exists on the page, return { "found": false, "confidence": "high", "notes": "<why>", "days": [] }.
 - Price numbers only — drop the "$".
 - If the page has happy hour but no per-item menu, still return days with empty "items" arrays.

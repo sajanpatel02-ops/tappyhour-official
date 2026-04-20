@@ -16,10 +16,18 @@ enum DayKey: String, CaseIterable, Identifiable, Hashable {
 struct HappyHourItem: Identifiable {
     let id: UUID
     var item: String
-    var normal: Double
-    var deal: Double
-    init(id: UUID = UUID(), item: String, normal: Double, deal: Double) {
-        self.id = id; self.item = item; self.normal = normal; self.deal = deal
+    /// Normal (pre-discount) price. Nil when only a label is provided
+    /// (e.g. "50% off wine" or "$6-$12 small bites").
+    var normal: Double?
+    /// Deal price. Nil when only a label is provided.
+    var deal: Double?
+    /// Free-form label for deals that don't map to a single number
+    /// (e.g. "50% off", "$6-$12"). Mutually exclusive with normal/deal.
+    var label: String?
+    init(id: UUID = UUID(), item: String,
+         normal: Double? = nil, deal: Double? = nil, label: String? = nil) {
+        self.id = id; self.item = item
+        self.normal = normal; self.deal = deal; self.label = label
     }
 }
 

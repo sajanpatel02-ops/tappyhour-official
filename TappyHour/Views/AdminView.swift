@@ -328,9 +328,26 @@ struct AdminView: View {
                     Image(systemName: "trash").font(.system(size: 13)).foregroundStyle(.red.opacity(0.7))
                 }
             }
-            HStack(spacing: 12) {
-                priceField("Regular", value: item.normal, accent: false) { v in updateItem(item.id) { $0.normal = v } }
-                priceField("Deal price", value: item.deal, accent: true) { v in updateItem(item.id) { $0.deal = v } }
+            // Custom label (for "50% off", "$6-$12" type deals). When filled,
+            // the numeric prices are ignored by the detail view.
+            TextField("Custom deal label (e.g. \"50% off\", \"$6-$12\")",
+                      text: Binding(
+                        get: { item.label ?? "" },
+                        set: { v in updateItem(item.id) { $0.label = v.isEmpty ? nil : v } }
+                      ))
+                .font(.system(size: 13))
+                .foregroundStyle(t.text)
+                .tint(t.accent)
+                .padding(10)
+                .background(vm.isDark ? Color.white.opacity(0.05) : Color.black.opacity(0.04))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            // Hide price fields when a label is in use — avoids confusion.
+            if (item.label ?? "").isEmpty {
+                HStack(spacing: 12) {
+                    priceField("Regular", value: item.normal ?? 0, accent: false) { v in updateItem(item.id) { $0.normal = v } }
+                    priceField("Deal price", value: item.deal ?? 0, accent: true) { v in updateItem(item.id) { $0.deal = v } }
+                }
             }
         }
         .padding(12)

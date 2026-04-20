@@ -358,15 +358,32 @@ struct VenueDetailView: View {
                 .font(.system(size: 15))
                 .foregroundStyle(t.text)
             Spacer()
-            HStack(spacing: 8) {
-                Text("$\(Int(item.normal))")
-                    .font(.system(size: 14))
-                    .foregroundStyle(t.muted)
-                    .strikethrough(true, color: t.muted)
-                Text("$\(Int(item.deal))")
+            // Three display modes:
+            //   1. Label present → show just the label ("50% off", "$6-$12")
+            //   2. Numeric normal+deal → strikethrough normal + accent deal
+            //   3. Neither → blank (shouldn't happen; defensive)
+            if let label = item.label, !label.isEmpty {
+                Text(label)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(t.accent)
-                    .monospacedDigit()
+            } else if let normal = item.normal, let deal = item.deal,
+                      !(normal == 0 && deal == 0) {
+                HStack(spacing: 8) {
+                    Text("$\(Int(normal))")
+                        .font(.system(size: 14))
+                        .foregroundStyle(t.muted)
+                        .strikethrough(true, color: t.muted)
+                    Text("$\(Int(deal))")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(t.accent)
+                        .monospacedDigit()
+                }
+            } else {
+                // No label and no real prices — direct users to the source.
+                Text("See menu")
+                    .font(.system(size: 12))
+                    .foregroundStyle(t.muted)
+                    .italic()
             }
         }
         .padding(.horizontal, 20)

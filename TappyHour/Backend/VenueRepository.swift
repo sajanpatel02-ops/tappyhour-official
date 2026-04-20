@@ -46,8 +46,9 @@ private struct MenuRow: Decodable {
     let id: String
     let schedule_id: String
     let name: String
-    let normal_price: Double
-    let deal_price: Double
+    let normal_price: Double?
+    let deal_price: Double?
+    let label: String?
     let sort_order: Int?
 }
 
@@ -124,7 +125,8 @@ enum VenueRepository {
                         id: UUID(uuidString: $0.id) ?? UUID(),
                         item: $0.name,
                         normal: $0.normal_price,
-                        deal: $0.deal_price
+                        deal: $0.deal_price,
+                        label: $0.label
                     )
                 }
             dict[day] = DaySchedule(
@@ -208,7 +210,12 @@ enum VenueRepository {
 
     /// Publish (replace) the entire schedule for a venue.
     static func publish(venueId: String, schedule: [DayKey: DaySchedule]) async throws {
-        struct ItemPayload: Encodable { let name: String; let normal: Double; let deal: Double }
+        struct ItemPayload: Encodable {
+            let name: String
+            let normal: Double?
+            let deal: Double?
+            let label: String?
+        }
         struct DayPayload: Encodable {
             let day: String; let start: String; let end: String
             let headline: String; let items: [ItemPayload]
@@ -222,7 +229,7 @@ enum VenueRepository {
                 start: startHHmm,
                 end: endHHmm,
                 headline: ds.headline,
-                items: ds.menu.map { ItemPayload(name: $0.item, normal: $0.normal, deal: $0.deal) }
+                items: ds.menu.map { ItemPayload(name: $0.item, normal: $0.normal, deal: $0.deal, label: $0.label) }
             )
         }
 

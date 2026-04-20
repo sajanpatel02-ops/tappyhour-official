@@ -6,8 +6,9 @@ import Supabase
 enum ExtractService {
     struct ExtractedItem: Decodable {
         let name: String
-        let normal: Double
-        let deal: Double
+        let normal: Double?
+        let deal: Double?
+        let label: String?
     }
 
     struct ExtractedDay: Decodable {
@@ -53,7 +54,8 @@ enum ExtractService {
                 hours: formatHours(start: d.start, end: d.end),
                 headline: trimHeadline(d.headline),
                 menu: d.items.map {
-                    HappyHourItem(item: trimItemName($0.name), normal: $0.normal, deal: $0.deal)
+                    HappyHourItem(item: trimItemName($0.name),
+                                  normal: $0.normal, deal: $0.deal, label: $0.label)
                 }
             )
         }
