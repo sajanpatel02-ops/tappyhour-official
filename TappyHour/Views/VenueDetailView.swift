@@ -145,6 +145,21 @@ struct VenueDetailView: View {
 
             divider
 
+            // Last-updated stamp sits right above the weekday picker so admins
+            // can tell at a glance whether the posted deals are fresh.
+            if let updated = venue.scheduleUpdatedAt {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 10))
+                    Text("Deals updated \(relativeUpdated(updated))")
+                        .font(.system(size: 11))
+                    Spacer()
+                }
+                .foregroundStyle(t.muted)
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
+            }
+
             // Weekday picker
             weekdayPicker
                 .padding(.vertical, 16)
@@ -273,17 +288,6 @@ struct VenueDetailView: View {
             }
             .padding(.bottom, 16)
 
-            if let updated = venue.scheduleUpdatedAt {
-                HStack(spacing: 6) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 10))
-                    Text("Updated \(relativeUpdated(updated))")
-                        .font(.system(size: 11))
-                }
-                .foregroundStyle(t.muted)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 14)
-            }
         }
     }
 

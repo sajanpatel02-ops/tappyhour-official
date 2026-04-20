@@ -140,10 +140,11 @@ struct AddVenueSheet: View {
             if !vm.venues.contains(where: { $0.id == newId }) {
                 vm.venues.append(localVenue)
             }
-            // Close this sheet and open AdminView
-            vm.isAddingVenue = false
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            // Open AdminView FIRST so the map's bottom-sheet gate stays closed,
+            // then dismiss AddVenueSheet. (Previously we flipped isAddingVenue
+            // first, which let the list flash up during the transition.)
             vm.adminVenueId = newId
+            vm.isAddingVenue = false
         } catch {
             errorText = "\(error.localizedDescription)"
         }
