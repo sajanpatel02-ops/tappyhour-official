@@ -26,6 +26,12 @@ struct MapDiscoveryView: View {
         }
     }
 
+    // The sheet is always sized to fullH; we slide it with offset.
+    // offsetY = how far DOWN from fullH we push the sheet.
+    private func restingOffset(_ geo: GeometryProxy) -> CGFloat {
+        fullH(geo) - sheetH(geo)
+    }
+
     var body: some View {
         let t = vm.theme
         GeometryReader { geo in
@@ -77,7 +83,6 @@ struct MapDiscoveryView: View {
                     }
                     .padding(.trailing, 14)
                     .padding(.bottom, sheetH(geo) + 16)
-                    .animation(.spring(response: 0.32), value: sheetH(geo))
                 }
                 .frame(maxHeight: .infinity, alignment: .bottom)
 
@@ -121,39 +126,43 @@ struct MapDiscoveryView: View {
 
     @ViewBuilder
     private func bottomSheet(t: AppTheme, geo: GeometryProxy) -> some View {
-        let currentH = max(peekH, min(fullH(geo), sheetH(geo) + dragOffset))
+        // Sheet is sized once to fullH and slid via offset — cheap, no relayout.
+        let offsetY = max(0, min(fullH(geo) - peekH, restingOffset(geo) + dragOffset))
+
         VStack(spacing: 0) {
-            // Handle
-            Capsule()
-                .fill(vm.isDark ? Color.white.opacity(0.2) : Color.black.opacity(0.15))
-                .frame(width: 36, height: 5)
-                .padding(.vertical, 10)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
-                        switch vm.sheetSize {
-                        case .peek: vm.sheetSize = .half
-                        case .half: vm.sheetSize = .full
-                        case .full: vm.sheetSize = .peek
-                        }
+            // Handle + drag area
+            VStack(spacing: 0) {
+                Capsule()
+                    .fill(vm.isDark ? Color.white.opacity(0.2) : Color.black.opacity(0.15))
+                    .frame(width: 36, height: 5)
+                    .padding(.vertical, 10)
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                    switch vm.sheetSize {
+                    case .peek: vm.sheetSize = .half
+                    case .half: vm.sheetSize = .full
+                    case .full: vm.sheetSize = .peek
                     }
                 }
-                .gesture(
-                    DragGesture()
-                        .onChanged { dragOffset = -$0.translation.height }
-                        .onEnded { val in
-                            let v = val.translation.height
-                            withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
-                                if v < -60 {
-                                    vm.sheetSize = vm.sheetSize == .peek ? .half : .full
-                                } else if v > 60 {
-                                    vm.sheetSize = vm.sheetSize == .full ? .half : .peek
-                                }
-                                dragOffset = 0
+            }
+            .gesture(
+                DragGesture()
+                    .onChanged { dragOffset = $0.translation.height }
+                    .onEnded { val in
+                        let v = val.translation.height
+                        withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                            if v < -60 {
+                                vm.sheetSize = vm.sheetSize == .peek ? .half : .full
+                            } else if v > 60 {
+                                vm.sheetSize = vm.sheetSize == .full ? .half : .peek
                             }
+                            dragOffset = 0
                         }
-                )
+                    }
+            )
 
             if let id = vm.selectedVenueId, vm.sheetSize == .peek, let venue = vm.venue(id) {
                 VenueCard(venue: venue, vm: vm)
@@ -163,15 +172,17 @@ struct MapDiscoveryView: View {
             } else {
                 sheetListContent(t: t)
             }
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: currentH, alignment: .top)
+        .frame(height: fullH(geo), alignment: .top)
         .background(
             t.sheetBg
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                 .ignoresSafeArea(edges: .bottom)
                 .shadow(color: .black.opacity(0.18), radius: 20, y: -4)
         )
+        .offset(y: offsetY)
         .animation(.spring(response: 0.32, dampingFraction: 0.85), value: vm.sheetSize)
     }
 
