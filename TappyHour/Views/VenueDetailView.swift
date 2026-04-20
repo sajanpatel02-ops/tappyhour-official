@@ -256,7 +256,28 @@ struct VenueDetailView: View {
                 }
             }
             .padding(.bottom, 16)
+
+            if let updated = venue.scheduleUpdatedAt {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 10))
+                    Text("Updated \(relativeUpdated(updated))")
+                        .font(.system(size: 11))
+                }
+                .foregroundStyle(t.muted)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 14)
+            }
         }
+    }
+
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .full
+        return f
+    }()
+    private func relativeUpdated(_ date: Date) -> String {
+        Self.relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 
     private func menuItemRow(_ item: HappyHourItem) -> some View {

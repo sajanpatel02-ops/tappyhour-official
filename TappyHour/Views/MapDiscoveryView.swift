@@ -147,8 +147,17 @@ private struct BottomSheetView: View {
         let t = vm.theme
         let offsetY = max(0, min(fullH - peekH, restingOffset + dragOffset))
 
-        let sheetDrag = DragGesture(minimumDistance: 4)
-            .onChanged { dragOffset = $0.translation.height }
+        // minimumDistance: 0 → sheet tracks finger instantly, no 4pt snap.
+        // Transaction disables animation on dragOffset updates so offset follows
+        // the finger 1:1 instead of being interpolated by an implicit animation.
+        let sheetDrag = DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                var txn = Transaction()
+                txn.disablesAnimations = true
+                withTransaction(txn) {
+                    dragOffset = value.translation.height
+                }
+            }
             .onEnded { val in
                 let v = val.translation.height
                 withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
@@ -162,22 +171,18 @@ private struct BottomSheetView: View {
             }
 
         VStack(spacing: 0) {
-            Capsule()
-                .fill(vm.isDark ? Color.white.opacity(0.2) : Color.black.opacity(0.15))
-                .frame(width: 36, height: 5)
-                .padding(.vertical, 10)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
-                        switch vm.sheetSize {
-                        case .peek: vm.sheetSize = .half
-                        case .half: vm.sheetSize = .full
-                        case .full: vm.sheetSize = .peek
-                        }
-                    }
-                }
-                .gesture(sheetDrag)
+            // Grab area — bigger than the capsule itself, only the drag gesture
+            // (no onTapGesture → no gesture arbitration delay)
+            ZStack {
+                Color.clear
+                Capsule()
+                    .fill(vm.isDark ? Color.white.opacity(0.2) : Color.black.opacity(0.15))
+                    .frame(width: 36, height: 5)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 28)
+            .contentShape(Rectangle())
+            .gesture(sheetDrag)
 
             if let id = vm.selectedVenueId, vm.sheetSize == .peek, let venue = vm.venue(id) {
                 VenueCard(venue: venue, vm: vm)
@@ -185,7 +190,7 @@ private struct BottomSheetView: View {
                     .padding(.bottom, 20)
                     .transition(.opacity)
             } else {
-                listContent(t: t, dragGesture: sheetDrag)
+                listContent(t: t)
             }
             Spacer(minLength: 0)
         }
@@ -202,7 +207,7 @@ private struct BottomSheetView: View {
     }
 
     @ViewBuilder
-    private func listContent(t: AppTheme, dragGesture: some Gesture) -> some View {
+    private func listContent(t: AppTheme) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .lastTextBaseline) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -223,8 +228,6 @@ private struct BottomSheetView: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 10)
-            .contentShape(Rectangle())
-            .gesture(dragGesture)
 
             ScrollView {
                 LazyVStack(spacing: 10) {

@@ -2,6 +2,14 @@ import Foundation
 import CoreLocation
 import Supabase
 
+private extension ISO8601DateFormatter {
+    static let withFractional: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+}
+
 // Wire DTOs (match column names exactly)
 private struct VenueRow: Decodable {
     let id: String
@@ -21,6 +29,7 @@ private struct VenueRow: Decodable {
     // location is geography(point); we read lng/lat via the helpers below
     let lat: Double?
     let lng: Double?
+    let schedule_updated_at: String?
 }
 
 private struct ScheduleRow: Decodable {
@@ -137,8 +146,15 @@ enum VenueRepository {
             endsIn: 9999,
             coordinate: CLLocationCoordinate2D(latitude: v.lat ?? 0, longitude: v.lng ?? 0),
             tags: v.tags ?? [],
-            schedule: dict
+            schedule: dict,
+            scheduleUpdatedAt: parseTimestamp(v.schedule_updated_at)
         )
+    }
+
+    private static let iso8601 = ISO8601DateFormatter.withFractional
+    private static func parseTimestamp(_ s: String?) -> Date? {
+        guard let s else { return nil }
+        return iso8601.date(from: s) ?? ISO8601DateFormatter().date(from: s)
     }
 
     struct NewVenue {
