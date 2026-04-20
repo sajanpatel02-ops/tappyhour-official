@@ -17,6 +17,7 @@
 		26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D91C08C21D9592FF8131741 /* ListFeedView.swift */; };
 		452CCA2AAFDC3413CF1B43E9 /* MapDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */; };
 		4C49F1F6BC793846DB3C41BE /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0ECBE2F6D1C244327BB7CEDD /* MapKit.framework */; };
+		5FCF8B8560173C84ADC282F1 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C809A4966B8B7CF690A7BFB6 /* LocationManager.swift */; };
 		984DD8FB9E890B63B0E301F7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B57E7EC7B5E743526A0548 /* LoginView.swift */; };
 		9E56AEDD29FB1B38E1E10445 /* AddVenueSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892B4D63CE70E3039F834E6E /* AddVenueSheet.swift */; };
 		B0972A5A6EEE36C1E441830D /* VenueDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1486361DCD60BC65094DC222 /* VenueDetailView.swift */; };
@@ -55,6 +56,7 @@
 		BB4E5F70CC15404BE6437AE4 /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
 		C476EF23EAEB0A677293D730 /* VenueRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VenueRepository.swift; sourceTree = "<group>"; };
 		C7A65B24A2844A831C47BDFC /* TappyHour.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TappyHour.entitlements; sourceTree = "<group>"; };
+		C809A4966B8B7CF690A7BFB6 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		D7DA43B705EDC6CC331F850C /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -167,6 +169,7 @@
 			isa = PBXGroup;
 			children = (
 				1439799852698520056EE7A2 /* AuthService.swift */,
+				C809A4966B8B7CF690A7BFB6 /* LocationManager.swift */,
 				166BFDED1DC223435E56B16F /* Supa.swift */,
 				A185ECACCAEE357B8736220C /* SupabaseConfig.swift */,
 				C476EF23EAEB0A677293D730 /* VenueRepository.swift */,
@@ -256,6 +259,7 @@
 				2105BA459E020B7869E69112 /* AuthService.swift in Sources */,
 				1FB14468887FADA2DA334F04 /* ContentView.swift in Sources */,
 				26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */,
+				5FCF8B8560173C84ADC282F1 /* LocationManager.swift in Sources */,
 				984DD8FB9E890B63B0E301F7 /* LoginView.swift in Sources */,
 				452CCA2AAFDC3413CF1B43E9 /* MapDiscoveryView.swift in Sources */,
 				1B2DB19039A2D0E6925A6F9C /* SampleData.swift in Sources */,

@@ -3,6 +3,7 @@ import MapKit
 
 struct MapDiscoveryView: View {
     @Bindable var vm: AppViewModel
+    @State private var location = LocationManager.shared
     @State private var position: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 41.888, longitude: -87.645),
@@ -18,6 +19,7 @@ struct MapDiscoveryView: View {
                     && vm.adminVenueId == nil
                     && !vm.isSearchActive
                     && !vm.showLogin
+                    && !vm.isAddingVenue
             },
             set: { _ in }
         )
@@ -78,11 +80,16 @@ struct MapDiscoveryView: View {
             if vm.sheetSize != .full {
                 Button {
                     withAnimation(.spring(duration: 0.4)) {
+                        // Prefer the user's actual location; fall back to Chicago.
+                        let center = location.lastLocation?.coordinate
+                            ?? CLLocationCoordinate2D(latitude: 41.888, longitude: -87.645)
                         position = .region(MKCoordinateRegion(
-                            center: CLLocationCoordinate2D(latitude: 41.888, longitude: -87.645),
-                            span: MKCoordinateSpan(latitudeDelta: 0.065, longitudeDelta: 0.065)
+                            center: center,
+                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
                         ))
                     }
+                    // If permission wasn't granted yet, request it on first tap.
+                    location.requestAndStart()
                 } label: {
                     Image(systemName: "location")
                         .font(.system(size: 17, weight: .medium))
@@ -98,6 +105,7 @@ struct MapDiscoveryView: View {
             }
         }
         .onChange(of: vm.query) { _, _ in recenterToFilter() }
+        .onAppear { location.requestAndStart() }
         .sheet(isPresented: sheetPresented) {
             BottomSheetContent(vm: vm)
                 .presentationDetents([peekID, halfID, fullID], selection: detentBinding)
@@ -147,6 +155,19 @@ struct MapDiscoveryView: View {
 private struct BottomSheetContent: View {
     @Bindable var vm: AppViewModel
 
+    private func chipLabel(icon: String, text: String, fg: Color, bg: Color, stroke: Color) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 11, weight: .semibold))
+            Text(text).font(.system(size: 11, weight: .semibold)).tracking(0.3)
+        }
+        .foregroundStyle(fg)
+        .padding(.horizontal, 11)
+        .padding(.vertical, 6)
+        .background(bg)
+        .clipShape(Capsule())
+        .overlay(Capsule().strokeBorder(stroke, lineWidth: 0.5))
+    }
+
     var body: some View {
         let t = vm.theme
         ZStack {
@@ -181,6 +202,31 @@ private struct BottomSheetContent: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 14)
                     .padding(.bottom, 10)
+
+                    // Role-gated chips — same as ListFeedView
+                    if vm.isAdmin || vm.canManageAny {
+                        HStack(spacing: 8) {
+                            if vm.isAdmin {
+                                Button { vm.isAddingVenue = true } label: {
+                                    chipLabel(icon: "plus", text: "Add bar",
+                                              fg: t.text, bg: t.card, stroke: t.cardBorder)
+                                }
+                            }
+                            if vm.canManageAny {
+                                Button {
+                                    let firstMine = vm.venues.first(where: { vm.managedVenueIds.contains($0.id) })?.id
+                                    vm.adminVenueId = firstMine ?? (vm.isAdmin ? vm.venues.first?.id : nil)
+                                } label: {
+                                    chipLabel(icon: "gear", text: "Manager",
+                                              fg: t.accent, bg: t.accent.opacity(0.12),
+                                              stroke: t.accent.opacity(0.33))
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 12)
+                    }
 
                     ScrollView {
                         LazyVStack(spacing: 10) {

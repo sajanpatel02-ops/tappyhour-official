@@ -1,7 +1,18 @@
 import Foundation
 import CoreLocation
 
-let TODAY: DayKey = .fr
+var TODAY: DayKey {
+    // Calendar weekday: Sunday = 1 … Saturday = 7
+    switch Calendar.current.component(.weekday, from: Date()) {
+    case 1: .su
+    case 2: .mo
+    case 3: .tu
+    case 4: .we
+    case 5: .th
+    case 6: .fr
+    default: .sa
+    }
+}
 
 let NEIGHBORHOODS = [
     "West Loop", "Fulton Market", "River North", "Wicker Park",
