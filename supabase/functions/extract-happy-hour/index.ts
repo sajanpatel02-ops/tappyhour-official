@@ -222,7 +222,6 @@ Deno.serve(async (req) => {
     console.log("Claude parsed output:", JSON.stringify(parsed));
     return json(parsed, 200);
   }
-  // Log to edge function logs so we can diagnose (Supabase test UI hides body fields)
   console.error("Claude returned non-JSON. Raw output:", claudeJSON);
   return json(
     { error: "Claude returned non-JSON", raw: claudeJSON.slice(0, 800) },
