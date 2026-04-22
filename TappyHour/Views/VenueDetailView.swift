@@ -367,7 +367,7 @@ struct VenueDetailView: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(t.accent)
             } else if let normal = item.normal, let deal = item.deal,
-                      !(normal == 0 && deal == 0) {
+                      normal > 0, deal > 0 {
                 HStack(spacing: 8) {
                     Text("$\(Int(normal))")
                         .font(.system(size: 14))
@@ -378,6 +378,12 @@ struct VenueDetailView: View {
                         .foregroundStyle(t.accent)
                         .monospacedDigit()
                 }
+            } else if let single = [item.deal, item.normal].compactMap({ $0 }).first(where: { $0 > 0 }) {
+                // Only one side populated — show just that price.
+                Text("$\(Int(single))")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(t.accent)
+                    .monospacedDigit()
             } else {
                 // No label and no real prices — direct users to the source.
                 Text("See menu")
