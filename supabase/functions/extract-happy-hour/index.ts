@@ -2,12 +2,21 @@
 // Fetches a bar's website and asks Claude to pull out happy hour info
 // as structured JSON. Returns { found: bool, confidence, days[], notes }.
 //
-// Deploy via: Supabase Dashboard → Edge Functions → New Function → paste this.
-// Secret required: ANTHROPIC_API_KEY
+// Retry ladder:
+//   1. Plain fetch            — free, works for server-rendered pages
+//   2. Browserless /content   — rendered HTML after JS (unblocks SPAs, 403s)
+//   3. Browserless /screenshot → Claude vision (unblocks image-only menus)
+//
+// Secrets required:
+//   ANTHROPIC_API_KEY   — Claude
+//   BROWSERLESS_TOKEN   — optional; without it we skip to step 3... wait, no
+//                         — without it we skip steps 2 & 3 entirely.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+const BROWSERLESS_TOKEN = Deno.env.get("BROWSERLESS_TOKEN");
+const BROWSERLESS_BASE = "https://production-sfo.browserless.io";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +33,6 @@ function htmlToText(html: string): string {
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
     .replace(/<!--[\s\S]*?-->/g, " ")
-    // Turn block-level tags into newlines so text is readable
     .replace(/<(\/)?(p|div|li|ul|ol|br|h[1-6]|section|article|header|footer)[^>]*>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
@@ -86,31 +94,10 @@ interface ClaudeResponse {
   content: Array<{ type: string; text?: string }>;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  if (!ANTHROPIC_API_KEY) {
-    return json({ error: "ANTHROPIC_API_KEY not configured" }, 500);
-  }
-
-  let body: { url?: string };
+// Fetch the URL directly. Returns the response (nullable on failure).
+async function plainFetch(url: string): Promise<Response | null> {
   try {
-    body = await req.json();
-  } catch {
-    return json({ error: "Invalid JSON body" }, 400);
-  }
-
-  const url = body.url?.trim();
-  if (!url || !/^https?:\/\//i.test(url)) {
-    return json({ error: "Provide a valid http(s) URL" }, 400);
-  }
-
-  // 1. Fetch the page
-  let fetched: Response;
-  try {
-    fetched = await fetch(url, {
+    const r = await fetch(url, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
@@ -126,64 +113,73 @@ Deno.serve(async (req) => {
       redirect: "follow",
       signal: AbortSignal.timeout(15000),
     });
-    if (!fetched.ok) {
-      return json(
-        { found: false, confidence: "high", notes: `Page returned ${fetched.status}`, days: [] },
-        200,
-      );
+    return r.ok ? r : null;
+  } catch {
+    return null;
+  }
+}
+
+// Ask Browserless for the rendered HTML after JS runs.
+async function browserlessContent(url: string): Promise<string | null> {
+  if (!BROWSERLESS_TOKEN) return null;
+  try {
+    const r = await fetch(`${BROWSERLESS_BASE}/content?token=${BROWSERLESS_TOKEN}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        url,
+        waitForTimeout: 2500,   // let JS settle
+        gotoOptions: { waitUntil: "networkidle2", timeout: 20000 },
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!r.ok) {
+      console.warn("Browserless /content failed:", r.status, await r.text());
+      return null;
     }
+    return await r.text();
   } catch (err) {
-    return json(
-      {
-        found: false,
-        confidence: "high",
-        notes: `Could not fetch page: ${err instanceof Error ? err.message : String(err)}`,
-        days: [],
-      },
-      200,
-    );
+    console.warn("Browserless /content error:", err);
+    return null;
   }
+}
 
-  const contentType = (fetched.headers.get("content-type") || "").toLowerCase();
-  const isPDF = contentType.includes("application/pdf") || url.toLowerCase().endsWith(".pdf");
-
-  // 2. Build the Claude message content — either a PDF document or extracted text
-  // deno-lint-ignore no-explicit-any
-  let userContent: any;
-
-  if (isPDF) {
-    // Claude natively reads PDFs via base64 document content block
-    const buf = await fetched.arrayBuffer();
-    const base64 = arrayBufferToBase64(buf);
-    userContent = [
-      {
-        type: "document",
-        source: { type: "base64", media_type: "application/pdf", data: base64 },
-      },
-      { type: "text", text: `URL: ${url}\n\nExtract happy hour info from this PDF. Return JSON only.` },
-    ];
-  } else {
-    const html = await fetched.text();
-    let text = htmlToText(html);
-    const MAX_CHARS = 12000;
-    if (text.length > MAX_CHARS) text = text.slice(0, MAX_CHARS);
-    if (text.length < 100) {
-      return json(
-        { found: false, confidence: "high", notes: "Page had almost no readable text (probably SPA or image-only).", days: [] },
-        200,
-      );
+// Ask Browserless for a full-page screenshot as a base64 PNG.
+async function browserlessScreenshot(url: string): Promise<string | null> {
+  if (!BROWSERLESS_TOKEN) return null;
+  try {
+    const r = await fetch(`${BROWSERLESS_BASE}/screenshot?token=${BROWSERLESS_TOKEN}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        url,
+        options: { fullPage: true, type: "png" },
+        gotoOptions: { waitUntil: "networkidle2", timeout: 20000 },
+      }),
+      signal: AbortSignal.timeout(35000),
+    });
+    if (!r.ok) {
+      console.warn("Browserless /screenshot failed:", r.status, await r.text());
+      return null;
     }
-    userContent = `URL: ${url}\n\nPage text:\n---\n${text}\n---\n\nReturn JSON only.`;
+    const buf = await r.arrayBuffer();
+    return arrayBufferToBase64(buf);
+  } catch (err) {
+    console.warn("Browserless /screenshot error:", err);
+    return null;
   }
+}
 
-  // 3. Ask Claude
+// Send content to Claude and return parsed JSON (or null).
+// deno-lint-ignore no-explicit-any
+async function askClaude(userContent: any, tag: string): Promise<any | null> {
   let claudeJSON: string;
   try {
     const resp = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
+        "x-api-key": ANTHROPIC_API_KEY!,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
@@ -192,54 +188,129 @@ Deno.serve(async (req) => {
         system: EXTRACTION_PROMPT,
         messages: [{ role: "user", content: userContent }],
       }),
-      signal: AbortSignal.timeout(45000),
+      signal: AbortSignal.timeout(60000),
     });
     if (!resp.ok) {
-      const errText = await resp.text();
-      return json({ error: `Claude API error: ${resp.status} ${errText}` }, 502);
+      console.error(`Claude error (${tag}):`, resp.status, await resp.text());
+      return null;
     }
     const data: ClaudeResponse = await resp.json();
     const first = data.content?.find((c) => c.type === "text");
-    if (!first?.text) return json({ error: "Empty Claude response" }, 502);
+    if (!first?.text) return null;
     claudeJSON = first.text.trim();
   } catch (err) {
-    return json({ error: `Claude call failed: ${err instanceof Error ? err.message : String(err)}` }, 502);
+    console.error(`Claude call failed (${tag}):`, err);
+    return null;
   }
 
-  // 4. Parse and return. Tolerate ```json fences AND stray prose —
-  // Claude occasionally wraps PDF responses in "Here is the JSON:" etc.
-  // Strategy: strip fences, then if that fails, slice from first { to last }.
   const stripped = claudeJSON
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();
-
-  const tryParse = (s: string) => {
+  // deno-lint-ignore no-explicit-any
+  const tryParse = (s: string): any | null => {
     try { return JSON.parse(s); } catch { return null; }
   };
-
   let parsed = tryParse(stripped);
   if (!parsed) {
-    const first = stripped.indexOf("{");
-    const last = stripped.lastIndexOf("}");
-    if (first !== -1 && last > first) {
-      parsed = tryParse(stripped.slice(first, last + 1));
+    const lo = stripped.indexOf("{");
+    const hi = stripped.lastIndexOf("}");
+    if (lo !== -1 && hi > lo) parsed = tryParse(stripped.slice(lo, hi + 1));
+  }
+  if (parsed) console.log(`Claude parsed (${tag}):`, JSON.stringify(parsed));
+  else console.error(`Claude non-JSON (${tag}):`, claudeJSON);
+  return parsed;
+}
+
+// Run Claude against extracted HTML text (shared by plain + browserless paths).
+// deno-lint-ignore no-explicit-any
+async function extractFromHtml(html: string, url: string, tag: string): Promise<any | null> {
+  let text = htmlToText(html);
+  const MAX_CHARS = 12000;
+  if (text.length > MAX_CHARS) text = text.slice(0, MAX_CHARS);
+  if (text.length < 100) return null;
+  const userContent = `URL: ${url}\n\nPage text:\n---\n${text}\n---\n\nReturn JSON only.`;
+  return await askClaude(userContent, tag);
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+  if (!ANTHROPIC_API_KEY) {
+    return json({ error: "ANTHROPIC_API_KEY not configured" }, 500);
+  }
+
+  let body: { url?: string };
+  try { body = await req.json(); }
+  catch { return json({ error: "Invalid JSON body" }, 400); }
+
+  const url = body.url?.trim();
+  if (!url || !/^https?:\/\//i.test(url)) {
+    return json({ error: "Provide a valid http(s) URL" }, 400);
+  }
+
+  // PDFs get their own fast path — Claude reads them directly.
+  const isPDFUrl = url.toLowerCase().endsWith(".pdf");
+
+  // ── Attempt 1: plain fetch ──────────────────────────────────────────
+  const resp = await plainFetch(url);
+  if (resp) {
+    const ct = (resp.headers.get("content-type") || "").toLowerCase();
+    const isPDF = ct.includes("application/pdf") || isPDFUrl;
+    if (isPDF) {
+      const buf = await resp.arrayBuffer();
+      const base64 = arrayBufferToBase64(buf);
+      const userContent = [
+        { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
+        { type: "text", text: `URL: ${url}\n\nExtract happy hour info from this PDF. Return JSON only.` },
+      ];
+      const parsed = await askClaude(userContent, "pdf");
+      if (parsed) return json(parsed, 200);
+    } else {
+      const html = await resp.text();
+      const parsed = await extractFromHtml(html, url, "plain");
+      if (parsed?.found === true) return json(parsed, 200);
+      console.log("Plain fetch: found=false, escalating to Browserless");
+    }
+  } else {
+    console.log("Plain fetch failed; escalating to Browserless");
+  }
+
+  // ── Attempt 2: Browserless rendered HTML ───────────────────────────
+  if (BROWSERLESS_TOKEN && !isPDFUrl) {
+    const rendered = await browserlessContent(url);
+    if (rendered) {
+      const parsed = await extractFromHtml(rendered, url, "browserless-html");
+      if (parsed?.found === true) return json(parsed, 200);
+      console.log("Browserless HTML: found=false, escalating to screenshot");
     }
   }
 
-  if (parsed) {
-    console.log("Claude parsed output:", JSON.stringify(parsed));
-    return json(parsed, 200);
+  // ── Attempt 3: Browserless screenshot + Claude vision ──────────────
+  if (BROWSERLESS_TOKEN && !isPDFUrl) {
+    const shot = await browserlessScreenshot(url);
+    if (shot) {
+      const userContent = [
+        { type: "image", source: { type: "base64", media_type: "image/png", data: shot } },
+        { type: "text", text: `URL: ${url}\n\nExtract happy hour info from this screenshot of the page. Return JSON only.` },
+      ];
+      const parsed = await askClaude(userContent, "browserless-shot");
+      if (parsed) return json(parsed, 200);
+    }
   }
-  console.error("Claude returned non-JSON. Raw output:", claudeJSON);
+
   return json(
-    { error: "Claude returned non-JSON", raw: claudeJSON.slice(0, 800) },
-    502,
+    {
+      found: false,
+      confidence: "high",
+      notes: "Couldn't extract happy hour info from that page (tried plain fetch, rendered HTML, and screenshot).",
+      days: [],
+    },
+    200,
   );
 });
 
-// Convert ArrayBuffer → base64 in chunks so we don't blow the call stack on
-// multi-MB PDFs (String.fromCharCode(...bytes) fails around ~100k args).
 function arrayBufferToBase64(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf);
   const CHUNK = 0x8000;
