@@ -48,6 +48,7 @@ struct ContentView: View {
         .task {
             await vm.restoreSession()
             await vm.loadVenues()
+            await vm.loadMySuggestions()
         }
         .sheet(isPresented: $vm.isAddingVenue) {
             AddVenueSheet(vm: vm)

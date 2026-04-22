@@ -35,6 +35,10 @@ class AppViewModel {
     var isLoading: Bool = false
     var loadError: String? = nil
 
+    /// The signed-in user's past venue requests. Loaded on start so we can
+    /// mark already-requested bars with a "Requested" pill in search.
+    var mySuggestions: [VenueRepository.VenueSuggestion] = []
+
     var theme: AppTheme { AppTheme(isDark: isDark, accent: accent) }
 
     var filteredVenues: [Venue] {
@@ -114,6 +118,29 @@ class AppViewModel {
             print("VenueRepository.fetchAll failed:", error)
         }
         isLoading = false
+    }
+
+    @MainActor
+    func loadMySuggestions() async {
+        guard isLoggedIn else { mySuggestions = []; return }
+        do { mySuggestions = try await VenueRepository.fetchMySuggestions() }
+        catch { print("fetchMySuggestions failed:", error) }
+    }
+
+    /// True if the signed-in user already requested a bar matching this
+    /// name+address (case-insensitive). Used for the "Requested" pill.
+    func hasRequested(name: String, address: String?) -> Bool {
+        let n = name.lowercased()
+        let a = (address ?? "").lowercased()
+        return mySuggestions.contains {
+            $0.name.lowercased() == n && ($0.address ?? "").lowercased() == a
+        }
+    }
+
+    @MainActor
+    func submitSuggestion(name: String, address: String) async throws {
+        try await VenueRepository.submitSuggestion(name: name, address: address)
+        await loadMySuggestions()
     }
 
     func resolvedVenue(_ id: String) -> Venue? {

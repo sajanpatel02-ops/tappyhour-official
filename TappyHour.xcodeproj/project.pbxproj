@@ -22,6 +22,7 @@
 		85BDF49DE3EDFE4BAD812E2E /* ExtractService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C410EC0E1F603783418DBF /* ExtractService.swift */; };
 		984DD8FB9E890B63B0E301F7 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B57E7EC7B5E743526A0548 /* LoginView.swift */; };
 		9E56AEDD29FB1B38E1E10445 /* AddVenueSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892B4D63CE70E3039F834E6E /* AddVenueSheet.swift */; };
+		AA835335C3C1A887F33DF83B /* ExternalVenueSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FD835E9F53F450E54F7848 /* ExternalVenueSheet.swift */; };
 		B0972A5A6EEE36C1E441830D /* VenueDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1486361DCD60BC65094DC222 /* VenueDetailView.swift */; };
 		B4109E16553F7B9BC290A59E /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A9D16FC8D450D58551014F /* AppTheme.swift */; };
 		BB82578130E0BC6321C66888 /* AdminView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE46CEEECF692A33D20E3CA /* AdminView.swift */; };
@@ -38,6 +39,7 @@
 		06FD0E3447DCF3B8B7EA4D6C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		083BBAD049FE1058C1659F2C /* TappyHour.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TappyHour.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0ECBE2F6D1C244327BB7CEDD /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = MapKit.framework; sourceTree = "<group>"; };
+		11FD835E9F53F450E54F7848 /* ExternalVenueSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalVenueSheet.swift; sourceTree = "<group>"; };
 		1439799852698520056EE7A2 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		1486361DCD60BC65094DC222 /* VenueDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VenueDetailView.swift; sourceTree = "<group>"; };
 		166BFDED1DC223435E56B16F /* Supa.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Supa.swift; sourceTree = "<group>"; };
@@ -134,6 +136,7 @@
 				892B4D63CE70E3039F834E6E /* AddVenueSheet.swift */,
 				2EE46CEEECF692A33D20E3CA /* AdminView.swift */,
 				06FD0E3447DCF3B8B7EA4D6C /* ContentView.swift */,
+				11FD835E9F53F450E54F7848 /* ExternalVenueSheet.swift */,
 				2D91C08C21D9592FF8131741 /* ListFeedView.swift */,
 				B4B57E7EC7B5E743526A0548 /* LoginView.swift */,
 				8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */,
@@ -264,6 +267,7 @@
 				C0019064F7B8295F99001540 /* AppViewModel.swift in Sources */,
 				2105BA459E020B7869E69112 /* AuthService.swift in Sources */,
 				1FB14468887FADA2DA334F04 /* ContentView.swift in Sources */,
+				AA835335C3C1A887F33DF83B /* ExternalVenueSheet.swift in Sources */,
 				85BDF49DE3EDFE4BAD812E2E /* ExtractService.swift in Sources */,
 				26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */,
 				5FCF8B8560173C84ADC282F1 /* LocationManager.swift in Sources */,

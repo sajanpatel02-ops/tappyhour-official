@@ -208,6 +208,41 @@ enum VenueRepository {
             .execute()
     }
 
+    // MARK: - Venue suggestions (user-submitted requests)
+
+    struct VenueSuggestion: Decodable, Identifiable, Hashable {
+        let id: String
+        let name: String
+        let address: String?
+        let status: String?
+    }
+
+    /// Insert a new suggestion for the signed-in user. RLS requires
+    /// suggested_by = auth.uid(), which Supabase fills from the JWT.
+    static func submitSuggestion(name: String, address: String) async throws {
+        struct Row: Encodable {
+            let name: String
+            let address: String
+            let suggested_by: String
+        }
+        let session = try await Supa.client.auth.session
+        let uid = session.user.id.uuidString.lowercased()
+        _ = try await Supa.client
+            .from("venue_suggestions")
+            .insert(Row(name: name, address: address, suggested_by: uid))
+            .execute()
+    }
+
+    /// Current user's past suggestions, used to show a "Requested" pill in search.
+    static func fetchMySuggestions() async throws -> [VenueSuggestion] {
+        try await Supa.client
+            .from("venue_suggestions")
+            .select("id,name,address,status")
+            .order("created_at", ascending: false)
+            .execute()
+            .value
+    }
+
     /// Publish (replace) the entire schedule for a venue.
     static func publish(venueId: String, schedule: [DayKey: DaySchedule]) async throws {
         struct ItemPayload: Encodable {
