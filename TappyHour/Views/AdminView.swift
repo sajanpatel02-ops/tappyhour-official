@@ -130,6 +130,25 @@ struct AdminView: View {
                     .disabled(isImporting || importURL.trimmingCharacters(in: .whitespaces).isEmpty)
                     .opacity((isImporting || importURL.trimmingCharacters(in: .whitespaces).isEmpty) ? 0.5 : 1)
 
+                    // Even when extraction fails, let the manager save the URL
+                    // so the detail view shows a "View menu online" link.
+                    Button {
+                        Task { await saveLinkOnly() }
+                    } label: {
+                        Text("Save link only (no schedule)")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(t.accent)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .strokeBorder(t.accent.opacity(0.4), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isImporting || importURL.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .opacity((isImporting || importURL.trimmingCharacters(in: .whitespaces).isEmpty) ? 0.5 : 1)
+
                     Spacer()
                 }
                 .padding(20)
@@ -172,6 +191,23 @@ struct AdminView: View {
             }
         } catch {
             importError = error.localizedDescription
+        }
+    }
+
+    /// Persist just the URL as the venue's menu link, without trying to extract
+    /// a schedule. For sites we can't parse (JS-rendered, image-only, blocked).
+    @MainActor
+    private func saveLinkOnly() async {
+        let src = importURL.trimmingCharacters(in: .whitespaces)
+        guard !src.isEmpty else { return }
+        importError = nil
+        isImporting = true
+        defer { isImporting = false }
+        do {
+            try await VenueRepository.setDealsSourceUrl(venueId: venue.id, url: src)
+            showingImportSheet = false
+        } catch {
+            importError = "Couldn't save link: \(error.localizedDescription)"
         }
     }
 

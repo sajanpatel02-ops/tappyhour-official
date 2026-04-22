@@ -31,7 +31,7 @@ class AppViewModel {
     var isAddingVenue: Bool = false
     var venueOverrides: [String: [DayKey: DaySchedule]] = [:]
 
-    var venues: [Venue] = VENUES   // sample data until first remote fetch completes
+    var venues: [Venue] = []
     var isLoading: Bool = false
     var loadError: String? = nil
 
