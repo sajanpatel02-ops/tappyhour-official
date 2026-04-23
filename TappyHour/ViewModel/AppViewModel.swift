@@ -39,6 +39,10 @@ class AppViewModel {
     /// mark already-requested bars with a "Requested" pill in search.
     var mySuggestions: [VenueRepository.VenueSuggestion] = []
 
+    /// Venue IDs the user has already flagged as outdated. Drives the
+    /// "Reported" pill on VenueDetailView so they can't spam-tap it.
+    var myReportedVenueIds: Set<String> = []
+
     var theme: AppTheme { AppTheme(isDark: isDark, accent: accent) }
 
     var filteredVenues: [Venue] {
@@ -141,6 +145,25 @@ class AppViewModel {
     func submitSuggestion(name: String, address: String) async throws {
         try await VenueRepository.submitSuggestion(name: name, address: address)
         await loadMySuggestions()
+    }
+
+    @MainActor
+    func loadMyReports() async {
+        guard isLoggedIn else { myReportedVenueIds = []; return }
+        do {
+            let reports = try await VenueRepository.fetchMyReports()
+            myReportedVenueIds = Set(reports.map(\.venue_id))
+        } catch { print("fetchMyReports failed:", error) }
+    }
+
+    func hasReported(_ venueId: String) -> Bool {
+        myReportedVenueIds.contains(venueId)
+    }
+
+    @MainActor
+    func reportOutdated(venueId: String) async throws {
+        try await VenueRepository.reportOutdated(venueId: venueId)
+        myReportedVenueIds.insert(venueId)
     }
 
     func resolvedVenue(_ id: String) -> Venue? {

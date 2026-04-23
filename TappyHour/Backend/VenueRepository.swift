@@ -243,6 +243,37 @@ enum VenueRepository {
             .value
     }
 
+    // MARK: - Venue reports (user-flagged "outdated" data)
+
+    struct VenueReport: Decodable, Identifiable, Hashable {
+        let id: String
+        let venue_id: String
+    }
+
+    /// Insert a "this venue's info is outdated" report.
+    static func reportOutdated(venueId: String) async throws {
+        struct Row: Encodable {
+            let venue_id: String
+            let reported_by: String
+        }
+        let session = try await Supa.client.auth.session
+        let uid = session.user.id.uuidString.lowercased()
+        _ = try await Supa.client
+            .from("venue_reports")
+            .insert(Row(venue_id: venueId, reported_by: uid))
+            .execute()
+    }
+
+    /// The current user's past reports (used to show a "Reported" state in UI).
+    static func fetchMyReports() async throws -> [VenueReport] {
+        try await Supa.client
+            .from("venue_reports")
+            .select("id,venue_id")
+            .order("created_at", ascending: false)
+            .execute()
+            .value
+    }
+
     /// Publish (replace) the entire schedule for a venue.
     static func publish(venueId: String, schedule: [DayKey: DaySchedule]) async throws {
         struct ItemPayload: Encodable {

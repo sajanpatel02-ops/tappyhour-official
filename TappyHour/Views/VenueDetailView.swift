@@ -5,6 +5,9 @@ struct VenueDetailView: View {
     @Bindable var vm: AppViewModel
     @State private var selectedDay: DayKey = TODAY
     @State private var presentedURL: PresentedURL? = nil
+    @State private var reportSubmitting = false
+    @State private var reportError: String? = nil
+    @State private var reportJustSubmitted = false
     @Environment(\.openURL) private var openURL
 
     private var t: AppTheme { vm.theme }
@@ -151,12 +154,19 @@ struct VenueDetailView: View {
     // MARK: - Detail Content
     private var detailContent: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Pin the content column to screen width so a long venue name
+            // or tag list can't blow out the layout (symptom: whole page
+            // appears "zoomed" with edges clipped on both sides).
+            Color.clear.frame(height: 0).frame(maxWidth: .infinity)
             // Venue name + meta
             VStack(alignment: .leading, spacing: 6) {
                 Text(venue.name)
                     .font(.custom("Georgia", size: 34))
                     .foregroundStyle(t.text)
                     .tracking(-0.5)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.6)
+                    .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
                     HStack(spacing: 3) {
                         Image(systemName: "star.fill")
@@ -238,6 +248,69 @@ struct VenueDetailView: View {
             aboutSection
                 .padding(.horizontal, 20)
                 .padding(.vertical, 20)
+
+            reportOutdatedRow
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
+        }
+    }
+
+    // MARK: - Report outdated
+
+    @ViewBuilder
+    private var reportOutdatedRow: some View {
+        let reported = reportJustSubmitted || vm.hasReported(venue.id)
+        if reported {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                Text("Thanks — we'll review this venue")
+            }
+            .font(.system(size: 13))
+            .foregroundStyle(t.muted)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+        } else {
+            Button {
+                Task { await submitOutdatedReport() }
+            } label: {
+                HStack(spacing: 6) {
+                    if reportSubmitting {
+                        ProgressView().tint(t.muted).scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "exclamationmark.bubble")
+                    }
+                    Text(reportSubmitting ? "Sending…" : "Deals look outdated? Let us know")
+                }
+                .font(.system(size: 13))
+                .foregroundStyle(t.muted)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(t.cardBorder, lineWidth: 0.5)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(reportSubmitting)
+            if let reportError {
+                Text(reportError)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.red)
+                    .padding(.top, 4)
+            }
+        }
+    }
+
+    @MainActor
+    private func submitOutdatedReport() async {
+        reportError = nil
+        reportSubmitting = true
+        defer { reportSubmitting = false }
+        do {
+            try await vm.reportOutdated(venueId: venue.id)
+            reportJustSubmitted = true
+        } catch {
+            reportError = error.localizedDescription
         }
     }
 

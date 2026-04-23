@@ -233,12 +233,48 @@ async function extractFromHtml(html: string, url: string, tag: string): Promise<
   return await askClaude(userContent, tag);
 }
 
+// Gate: call is_app_admin() using the caller's JWT. If the RPC returns true,
+// the user is an admin. Any other result (false, 401, network error) denies.
+async function callerIsAdmin(authHeader: string | null): Promise<boolean> {
+  if (!authHeader) return false;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!supabaseUrl || !anonKey) {
+    console.error("SUPABASE_URL or SUPABASE_ANON_KEY missing");
+    return false;
+  }
+  try {
+    const r = await fetch(`${supabaseUrl}/rest/v1/rpc/is_app_admin`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "apikey": anonKey,
+        "authorization": authHeader,
+      },
+      body: "{}",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!r.ok) return false;
+    const result = await r.json();
+    return result === true;
+  } catch (err) {
+    console.error("is_app_admin check failed:", err);
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
   if (!ANTHROPIC_API_KEY) {
     return json({ error: "ANTHROPIC_API_KEY not configured" }, 500);
+  }
+
+  // Only admins can trigger extraction — regular signed-in users have no
+  // reason to call this, and it's the most expensive endpoint.
+  if (!(await callerIsAdmin(req.headers.get("authorization")))) {
+    return json({ error: "Forbidden" }, 403);
   }
 
   let body: { url?: string };
