@@ -20,6 +20,9 @@ packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift
     from: "2.0.0"
+  Nuke:
+    url: https://github.com/kean/Nuke
+    from: "12.0.0"
 
 targets:
   TappyHour:
@@ -45,3 +48,7 @@ targets:
         embed: false
       - package: Supabase
         product: Supabase
+      - package: Nuke
+        product: Nuke
+      - package: Nuke
+        product: NukeUI

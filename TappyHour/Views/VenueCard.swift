@@ -50,20 +50,16 @@ struct VenueCard: View {
                 )
 
             if let s = venue.photoUrl, let url = URL(string: s) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let img):
-                        img.resizable().scaledToFill()
-                    case .empty, .failure:
-                        Text(venue.cuisine)
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundStyle(t.muted)
-                            .multilineTextAlignment(.center)
-                            .padding(4)
-                    @unknown default:
-                        EmptyView()
-                    }
+                CachedImage(url: url, targetWidth: 84) {
+                    Color.clear
+                } failure: {
+                    Text(venue.cuisine)
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundStyle(t.muted)
+                        .multilineTextAlignment(.center)
+                        .padding(4)
                 }
+                .scaledToFill()
             } else {
                 Text(venue.cuisine)
                     .font(.system(size: 9, design: .monospaced))

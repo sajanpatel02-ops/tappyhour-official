@@ -108,29 +108,22 @@ struct VenueDetailView: View {
 
             if let urlString = venue.photoUrl, let url = URL(string: urlString) {
                 // GeometryReader + fixed-size frame prevents a wide source
-                // image (e.g. 1200×600) from propagating its intrinsic
-                // width up through ZStack → ScrollView and blowing out
-                // the whole page layout.
+                // image from propagating its intrinsic width up through
+                // ZStack → ScrollView and blowing out the layout.
                 GeometryReader { geo in
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let img):
-                            img.resizable()
-                               .scaledToFill()
-                               .frame(width: geo.size.width, height: geo.size.height)
-                               .clipped()
-                        case .empty:
-                            ProgressView().tint(t.muted)
-                        case .failure:
-                            Text("[ \(venue.cuisine) — interior photo ]")
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(t.muted)
-                                .kerning(1)
-                        @unknown default:
-                            EmptyView()
-                        }
+                    CachedImage(url: url, targetWidth: geo.size.width) {
+                        ProgressView().tint(t.muted)
+                            .frame(width: geo.size.width, height: geo.size.height)
+                    } failure: {
+                        Text("[ \(venue.cuisine) — interior photo ]")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(t.muted)
+                            .kerning(1)
+                            .frame(width: geo.size.width, height: geo.size.height)
                     }
+                    .scaledToFill()
                     .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
                 }
                 // Dark gradient at top so back/share/heart icons stay readable
                 LinearGradient(
