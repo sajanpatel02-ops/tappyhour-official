@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		08DAA995E6AD5E75AFB840F6 /* Venue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 428FFDEDCA1D9C2BDE0B81FC /* Venue.swift */; };
+		0E1884FACE6075C938DB6892 /* LoadErrorBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98BED53D3AD25B6DEC46AA1C /* LoadErrorBanner.swift */; };
 		188008F3ACDD36D14FB35B38 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 4F713E8D9AC76253EDDF93D8 /* Supabase */; };
 		1B2DB19039A2D0E6925A6F9C /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB4E5F70CC15404BE6437AE4 /* SampleData.swift */; };
 		1D9CA1B933EFEDE8897FA36F /* Supa.swift in Sources */ = {isa = PBXBuildFile; fileRef = 166BFDED1DC223435E56B16F /* Supa.swift */; };
@@ -59,6 +60,7 @@
 		88A9D16FC8D450D58551014F /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		892B4D63CE70E3039F834E6E /* AddVenueSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddVenueSheet.swift; sourceTree = "<group>"; };
 		8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapDiscoveryView.swift; sourceTree = "<group>"; };
+		98BED53D3AD25B6DEC46AA1C /* LoadErrorBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadErrorBanner.swift; sourceTree = "<group>"; };
 		A11ED4ADAA6ABABE71D444EB /* TappyHourApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TappyHourApp.swift; sourceTree = "<group>"; };
 		A185ECACCAEE357B8736220C /* SupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfig.swift; sourceTree = "<group>"; };
 		AF1885CEA27CC10CD38B9609 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				06FD0E3447DCF3B8B7EA4D6C /* ContentView.swift */,
 				11FD835E9F53F450E54F7848 /* ExternalVenueSheet.swift */,
 				2D91C08C21D9592FF8131741 /* ListFeedView.swift */,
+				98BED53D3AD25B6DEC46AA1C /* LoadErrorBanner.swift */,
 				B4B57E7EC7B5E743526A0548 /* LoginView.swift */,
 				8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */,
 				359900C3506380B14980C2BE /* SafariView.swift */,
@@ -281,6 +284,7 @@
 				AA835335C3C1A887F33DF83B /* ExternalVenueSheet.swift in Sources */,
 				85BDF49DE3EDFE4BAD812E2E /* ExtractService.swift in Sources */,
 				26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */,
+				0E1884FACE6075C938DB6892 /* LoadErrorBanner.swift in Sources */,
 				5FCF8B8560173C84ADC282F1 /* LocationManager.swift in Sources */,
 				984DD8FB9E890B63B0E301F7 /* LoginView.swift in Sources */,
 				452CCA2AAFDC3413CF1B43E9 /* MapDiscoveryView.swift in Sources */,

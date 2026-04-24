@@ -23,6 +23,7 @@ struct ListFeedView: View {
                     } else {
                         listHeader
                     }
+                    LoadErrorBanner(vm: vm)
                     ForEach(venues) { venue in
                         VenueCard(venue: venue, vm: vm)
                             .padding(.horizontal, 16)
@@ -35,6 +36,7 @@ struct ListFeedView: View {
             }
             .scrollPosition(id: $vm.listScrollTargetId, anchor: .top)
         }
+        .animation(.spring(duration: 0.3), value: vm.loadError)
     }
 
     private var listHeader: some View {

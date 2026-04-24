@@ -250,6 +250,7 @@ private struct BottomSheetContent: View {
 
                     ScrollView {
                         LazyVStack(spacing: 10) {
+                            LoadErrorBanner(vm: vm)
                             ForEach(vm.venuesInView) { venue in
                                 VenueCard(venue: venue, vm: vm).padding(.horizontal, 14)
                             }
@@ -280,25 +281,37 @@ struct VenuePinView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 5) {
-                if venue.isEndingSoon && !isSelected {
-                    Circle().fill(.white).frame(width: 6, height: 6).shadow(color: .white.opacity(0.3), radius: 3)
-                }
-                Text(venue.price).font(.system(size: 12, weight: .semibold)).monospacedDigit()
-                Text("·").font(.system(size: 12)).opacity(0.4)
-                Text(venue.shortName).font(.system(size: 12, weight: .semibold))
-            }
-            .foregroundStyle(fg)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(bg)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .shadow(color: .black.opacity(isSelected ? 0.25 : 0.18), radius: isSelected ? 10 : 4, y: 2)
-            .scaleEffect(isSelected ? 1.12 : 1)
-            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isSelected)
+            if isSelected {
+                // Selected: short-name pill.
+                Text(venue.shortName)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(fg)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(bg)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .shadow(color: .black.opacity(0.25), radius: 10, y: 2)
+                .scaleEffect(1.08)
 
-            PinTail(color: bg)
+                PinTail(color: bg)
+            } else {
+                // Default: compact dot — accent for ending-soon, neutral
+                // otherwise. Keeps the map readable when many bars sit
+                // close together.
+                Circle()
+                    .fill(bg)
+                    .frame(width: venue.isEndingSoon ? 14 : 12,
+                           height: venue.isEndingSoon ? 14 : 12)
+                    .overlay(
+                        Circle().strokeBorder(
+                            isDark ? Color.white.opacity(0.35) : Color.black.opacity(0.2),
+                            lineWidth: 1
+                        )
+                    )
+                    .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
+            }
         }
+        .animation(.spring(response: 0.25, dampingFraction: 0.75), value: isSelected)
         .onTapGesture(perform: onTap)
     }
 }
