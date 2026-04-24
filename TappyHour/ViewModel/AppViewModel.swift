@@ -1,5 +1,6 @@
 import SwiftUI
 import Observation
+import CoreLocation
 
 enum ViewMode { case map, list, feed }
 enum SheetSize { case peek, half, full }
@@ -26,6 +27,11 @@ class AppViewModel {
     var savedIds: Set<String> = []
     var query: String = ""
     var isSearchActive: Bool = false
+
+    /// ID of the venue currently at the top of the list/feed. Persisted so
+    /// tapping into a venue detail and returning lands you back in the
+    /// same spot instead of at the top of the list.
+    var listScrollTargetId: String? = nil
 
     var adminVenueId: String? = nil
     var isAddingVenue: Bool = false
@@ -56,6 +62,26 @@ class AppViewModel {
     }
 
     func venue(_ id: String) -> Venue? { venues.first { $0.id == id } }
+
+    // MARK: - Distance / walk time from user's location
+
+    /// Miles from the user's current location to a venue, or nil if we
+    /// don't have a location fix yet (permission denied, simulator
+    /// without a set location, etc).
+    func distanceMiles(to venue: Venue) -> Double? {
+        guard let user = LocationManager.shared.lastLocation else { return nil }
+        let v = CLLocation(latitude: venue.coordinate.latitude,
+                           longitude: venue.coordinate.longitude)
+        return user.distance(from: v) / 1609.344
+    }
+
+    /// Rough walk time, assuming ~3 mph (~20 min/mile). Good enough for
+    /// a bar-hopping UI where "13 min walk" is a vibe check, not turn-
+    /// by-turn nav.
+    func walkMinutes(to venue: Venue) -> Int? {
+        guard let miles = distanceMiles(to: venue) else { return nil }
+        return max(1, Int((miles * 20).rounded()))
+    }
 
     @MainActor
     func signInApple() async {

@@ -539,7 +539,11 @@ struct VenueDetailView: View {
                 aboutRow(icon: "fork.knife", label: venue.cuisine)
                 aboutRow(icon: "face.smiling", label: venue.vibe)
                 aboutRow(icon: "mappin", label: venue.neighborhood)
-                aboutRow(icon: "figure.walk", label: "\(venue.walk) min walk · \(String(format: "%.1f", venue.distance)) mi")
+                if let mins = vm.walkMinutes(to: venue),
+                   let miles = vm.distanceMiles(to: venue) {
+                    aboutRow(icon: "figure.walk",
+                             label: "\(mins) min walk · \(String(format: "%.1f", miles)) mi")
+                }
                 aboutRow(icon: "calendar", label: "Happy hour: \(venue.summarizeDays())")
                 aboutRow(icon: "tag", label: venue.tags.joined(separator: ", "))
             }

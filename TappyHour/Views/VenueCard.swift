@@ -127,15 +127,16 @@ struct VenueCard: View {
             }
             .font(.system(size: 11.5))
 
-            dot.foregroundStyle(t.muted.opacity(0.4))
-
-            HStack(spacing: 3) {
-                Image(systemName: "figure.walk")
-                    .font(.system(size: 11))
-                Text("\(venue.walk) min")
+            if let mins = vm.walkMinutes(to: venue) {
+                dot.foregroundStyle(t.muted.opacity(0.4))
+                HStack(spacing: 3) {
+                    Image(systemName: "figure.walk")
+                        .font(.system(size: 11))
+                    Text("\(mins) min")
+                }
+                .font(.system(size: 11.5))
+                .foregroundStyle(t.muted)
             }
-            .font(.system(size: 11.5))
-            .foregroundStyle(t.muted)
         }
     }
 

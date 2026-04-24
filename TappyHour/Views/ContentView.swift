@@ -46,6 +46,7 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.2), value: vm.isSearchActive)
         .preferredColorScheme(vm.isDark ? .dark : .light)
         .task {
+            LocationManager.shared.requestAndStart()
             await vm.restoreSession()
             await vm.loadVenues()
             await vm.loadMySuggestions()

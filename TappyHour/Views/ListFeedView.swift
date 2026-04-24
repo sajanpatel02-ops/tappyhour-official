@@ -23,12 +23,14 @@ struct ListFeedView: View {
                     ForEach(venues) { venue in
                         VenueCard(venue: venue, vm: vm)
                             .padding(.horizontal, 16)
+                            .id(venue.id)
                     }
                 }
                 .padding(.top, 8)
                 .padding(.bottom, 120)
+                .scrollTargetLayout()
             }
-
+            .scrollPosition(id: $vm.listScrollTargetId, anchor: .top)
         }
     }
 
