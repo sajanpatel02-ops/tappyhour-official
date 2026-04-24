@@ -107,23 +107,30 @@ struct VenueDetailView: View {
             )
 
             if let urlString = venue.photoUrl, let url = URL(string: urlString) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let img):
-                        img.resizable()
-                           .scaledToFill()
-                           .frame(maxWidth: .infinity, maxHeight: .infinity)
-                           .clipped()
-                    case .empty:
-                        ProgressView().tint(t.muted)
-                    case .failure:
-                        Text("[ \(venue.cuisine) — interior photo ]")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(t.muted)
-                            .kerning(1)
-                    @unknown default:
-                        EmptyView()
+                // GeometryReader + fixed-size frame prevents a wide source
+                // image (e.g. 1200×600) from propagating its intrinsic
+                // width up through ZStack → ScrollView and blowing out
+                // the whole page layout.
+                GeometryReader { geo in
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let img):
+                            img.resizable()
+                               .scaledToFill()
+                               .frame(width: geo.size.width, height: geo.size.height)
+                               .clipped()
+                        case .empty:
+                            ProgressView().tint(t.muted)
+                        case .failure:
+                            Text("[ \(venue.cuisine) — interior photo ]")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(t.muted)
+                                .kerning(1)
+                        @unknown default:
+                            EmptyView()
+                        }
                     }
+                    .frame(width: geo.size.width, height: geo.size.height)
                 }
                 // Dark gradient at top so back/share/heart icons stay readable
                 LinearGradient(
@@ -147,6 +154,7 @@ struct VenueDetailView: View {
                     .kerning(1)
             }
         }
+        .frame(maxWidth: .infinity)
         .frame(height: 280)
         .clipped()
     }
@@ -154,9 +162,6 @@ struct VenueDetailView: View {
     // MARK: - Detail Content
     private var detailContent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Pin the content column to screen width so a long venue name
-            // or tag list can't blow out the layout (symptom: whole page
-            // appears "zoomed" with edges clipped on both sides).
             Color.clear.frame(height: 0).frame(maxWidth: .infinity)
             // Venue name + meta
             VStack(alignment: .leading, spacing: 6) {
