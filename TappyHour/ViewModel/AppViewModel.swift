@@ -1,9 +1,24 @@
 import SwiftUI
 import Observation
 import CoreLocation
+import MapKit
 
 enum ViewMode { case map, list, feed }
 enum SheetSize { case peek, half, full }
+
+extension MKCoordinateRegion {
+    /// True if this region's lat/lng bounding box contains the coordinate.
+    /// Good enough for filtering venues to "what's visible on the map" —
+    /// we don't need great-circle precision at neighborhood scale.
+    func contains(_ coord: CLLocationCoordinate2D) -> Bool {
+        let minLat = center.latitude - span.latitudeDelta / 2
+        let maxLat = center.latitude + span.latitudeDelta / 2
+        let minLng = center.longitude - span.longitudeDelta / 2
+        let maxLng = center.longitude + span.longitudeDelta / 2
+        return coord.latitude >= minLat && coord.latitude <= maxLat
+            && coord.longitude >= minLng && coord.longitude <= maxLng
+    }
+}
 
 @Observable
 class AppViewModel {
@@ -51,6 +66,11 @@ class AppViewModel {
 
     var theme: AppTheme { AppTheme(isDark: isDark, accent: accent) }
 
+    /// The map's current camera region. Updated by MapDiscoveryView as
+    /// the user pans/zooms. Drives `venuesInView` so the list reflects
+    /// "what's on the map right now".
+    var visibleRegion: MKCoordinateRegion? = nil
+
     var filteredVenues: [Venue] {
         guard !query.isEmpty else { return venues }
         let q = query.lowercased()
@@ -58,6 +78,31 @@ class AppViewModel {
             $0.name.lowercased().contains(q) ||
             $0.neighborhood.lowercased().contains(q) ||
             $0.cuisine.lowercased().contains(q)
+        }
+    }
+
+    /// Venues visible in the current map region, sorted by distance from
+    /// the user (or map center if we don't have a location yet). This is
+    /// what the list view shows so "the list matches what's on the map".
+    ///
+    /// Falls back to all venues when we don't have a region yet (first
+    /// launch, before the map appears). Also applies the search query.
+    var venuesInView: [Venue] {
+        let base = filteredVenues
+        let filtered: [Venue]
+        if let region = visibleRegion {
+            filtered = base.filter { region.contains($0.coordinate) }
+        } else {
+            filtered = base
+        }
+        let anchor = LocationManager.shared.lastLocation?.coordinate
+            ?? visibleRegion?.center
+        guard let anchor else { return filtered }
+        let ref = CLLocation(latitude: anchor.latitude, longitude: anchor.longitude)
+        return filtered.sorted {
+            let a = CLLocation(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
+            let b = CLLocation(latitude: $1.coordinate.latitude, longitude: $1.coordinate.longitude)
+            return ref.distance(from: a) < ref.distance(from: b)
         }
     }
 

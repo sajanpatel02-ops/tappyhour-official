@@ -10,6 +10,10 @@ struct MapDiscoveryView: View {
             span: MKCoordinateSpan(latitudeDelta: 0.065, longitudeDelta: 0.065)
         )
     )
+    /// Track whether we've already snapped the map to the user's first
+    /// fix. Prevents re-centering every time lastLocation updates while
+    /// they're panning around.
+    @State private var didCenterOnUser = false
     // Hide the sheet whenever a higher-level overlay (venue detail, admin,
     // search, login) takes over — otherwise the system sheet would sit on top.
     private var sheetPresented: Binding<Bool> {
@@ -74,6 +78,9 @@ struct MapDiscoveryView: View {
             }
             .mapStyle(.standard(elevation: .flat))
             .onTapGesture { withAnimation { vm.selectPin(nil) } }
+            .onMapCameraChange(frequency: .onEnd) { ctx in
+                vm.visibleRegion = ctx.region
+            }
             .ignoresSafeArea()
 
             // Locate FAB (top-right corner, below search bar). Simple fixed position.
@@ -105,6 +112,16 @@ struct MapDiscoveryView: View {
             }
         }
         .onChange(of: vm.query) { _, _ in recenterToFilter() }
+        .onChange(of: location.lastLocation) { _, new in
+            guard !didCenterOnUser, let coord = new?.coordinate else { return }
+            didCenterOnUser = true
+            withAnimation(.spring(response: 0.4)) {
+                position = .region(MKCoordinateRegion(
+                    center: coord,
+                    span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                ))
+            }
+        }
         .onAppear { location.requestAndStart() }
         .sheet(isPresented: sheetPresented) {
             BottomSheetContent(vm: vm)
@@ -188,7 +205,7 @@ private struct BottomSheetContent: View {
                                 .font(.custom("Georgia", size: 26))
                                 .foregroundStyle(t.text)
                                 .tracking(-0.4)
-                            Text("\(vm.filteredVenues.count) spots · sorted by distance")
+                            Text("\(vm.venuesInView.count) spots · sorted by distance")
                                 .font(.system(size: 12))
                                 .foregroundStyle(t.muted)
                         }
@@ -233,7 +250,7 @@ private struct BottomSheetContent: View {
 
                     ScrollView {
                         LazyVStack(spacing: 10) {
-                            ForEach(vm.filteredVenues) { venue in
+                            ForEach(vm.venuesInView) { venue in
                                 VenueCard(venue: venue, vm: vm).padding(.horizontal, 14)
                             }
                         }
