@@ -6,6 +6,20 @@ import MapKit
 enum ViewMode { case map, list, feed }
 enum SheetSize { case peek, half, full }
 
+enum ListDayFilter: Hashable {
+    case today
+    case all
+    case day(DayKey)
+
+    var shortLabel: String {
+        switch self {
+        case .today: "Today"
+        case .all:   "All"
+        case .day(let d): d.shortName
+        }
+    }
+}
+
 extension MKCoordinateRegion {
     /// True if this region's lat/lng bounding box contains the coordinate.
     /// Good enough for filtering venues to "what's visible on the map" —
@@ -48,6 +62,10 @@ class AppViewModel {
     /// same spot instead of at the top of the list.
     var listScrollTargetId: String? = nil
 
+    /// Filter for the list view: today, a specific weekday, or all (no
+    /// day filter — every bar with any happy hour at all).
+    var listDayFilter: ListDayFilter = .today
+
     var adminVenueId: String? = nil
     var isAddingVenue: Bool = false
     var venueOverrides: [String: [DayKey: DaySchedule]] = [:]
@@ -81,6 +99,18 @@ class AppViewModel {
         }
     }
 
+    /// Returns true if a venue matches the current list day filter.
+    ///   - .today: has a schedule for today's weekday
+    ///   - .all:   has any happy hour at all
+    ///   - .day(d): has a schedule for that specific weekday
+    func matchesDayFilter(_ v: Venue) -> Bool {
+        switch listDayFilter {
+        case .today:      return v.schedule[TODAY] != nil
+        case .all:        return !v.schedule.isEmpty
+        case .day(let d): return v.schedule[d] != nil
+        }
+    }
+
     /// Venues visible in the current map region, sorted by distance from
     /// the user (or map center if we don't have a location yet). This is
     /// what the list view shows so "the list matches what's on the map".
@@ -88,7 +118,7 @@ class AppViewModel {
     /// Falls back to all venues when we don't have a region yet (first
     /// launch, before the map appears). Also applies the search query.
     var venuesInView: [Venue] {
-        let base = filteredVenues
+        let base = filteredVenues.filter(matchesDayFilter)
         let filtered: [Venue]
         if let region = visibleRegion {
             filtered = base.filter { region.contains($0.coordinate) }

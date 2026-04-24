@@ -16,6 +16,7 @@
 		1FB14468887FADA2DA334F04 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06FD0E3447DCF3B8B7EA4D6C /* ContentView.swift */; };
 		2105BA459E020B7869E69112 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1439799852698520056EE7A2 /* AuthService.swift */; };
 		26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D91C08C21D9592FF8131741 /* ListFeedView.swift */; };
+		2F7A1F12810C882CA6FC8F13 /* DayFilterChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB85B2E6350939437CA87F99 /* DayFilterChip.swift */; };
 		2FEABCB1BE4D51040626F97A /* SafariView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359900C3506380B14980C2BE /* SafariView.swift */; };
 		44A4E6F8FD1621BAB6E1EF3C /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = 6DF572794648BDE083F76B3B /* NukeUI */; };
 		452CCA2AAFDC3413CF1B43E9 /* MapDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */; };
@@ -70,6 +71,7 @@
 		C7A65B24A2844A831C47BDFC /* TappyHour.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TappyHour.entitlements; sourceTree = "<group>"; };
 		C809A4966B8B7CF690A7BFB6 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		D7DA43B705EDC6CC331F850C /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		EB85B2E6350939437CA87F99 /* DayFilterChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayFilterChip.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -145,6 +147,7 @@
 				2EE46CEEECF692A33D20E3CA /* AdminView.swift */,
 				6A4C2CE0A4ECCA08CBC3298D /* CachedImage.swift */,
 				06FD0E3447DCF3B8B7EA4D6C /* ContentView.swift */,
+				EB85B2E6350939437CA87F99 /* DayFilterChip.swift */,
 				11FD835E9F53F450E54F7848 /* ExternalVenueSheet.swift */,
 				2D91C08C21D9592FF8131741 /* ListFeedView.swift */,
 				98BED53D3AD25B6DEC46AA1C /* LoadErrorBanner.swift */,
@@ -281,6 +284,7 @@
 				2105BA459E020B7869E69112 /* AuthService.swift in Sources */,
 				F6859890F3091CD3CCCA3F12 /* CachedImage.swift in Sources */,
 				1FB14468887FADA2DA334F04 /* ContentView.swift in Sources */,
+				2F7A1F12810C882CA6FC8F13 /* DayFilterChip.swift in Sources */,
 				AA835335C3C1A887F33DF83B /* ExternalVenueSheet.swift in Sources */,
 				85BDF49DE3EDFE4BAD812E2E /* ExtractService.swift in Sources */,
 				26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */,

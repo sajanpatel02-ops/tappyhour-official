@@ -22,6 +22,7 @@ struct ListFeedView: View {
                         feedHeader
                     } else {
                         listHeader
+                        if vm.viewMode == .list { dayFilterRow }
                     }
                     LoadErrorBanner(vm: vm)
                     ForEach(venues) { venue in
@@ -39,12 +40,29 @@ struct ListFeedView: View {
         .animation(.spring(duration: 0.3), value: vm.loadError)
     }
 
+    private var dayFilterRow: some View {
+        HStack {
+            DayFilterChip(vm: vm)
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 4)
+    }
+
+    private var listHeaderSuffix: String {
+        switch vm.listDayFilter {
+        case .today:      "spots with happy hour today"
+        case .all:        "spots with happy hour"
+        case .day(let d): "spots with happy hour on \(d.displayName)"
+        }
+    }
+
     private var listHeader: some View {
         HStack {
             (Text("\(venues.count) ")
                 .fontWeight(.semibold)
                 .foregroundStyle(t.text)
-            + Text("spots with happy hour now")
+            + Text(listHeaderSuffix)
                 .foregroundStyle(t.muted))
                 .font(.system(size: 12))
             Spacer()

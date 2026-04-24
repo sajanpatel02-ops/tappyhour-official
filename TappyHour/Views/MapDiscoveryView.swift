@@ -56,7 +56,7 @@ struct MapDiscoveryView: View {
         ZStack(alignment: .bottomTrailing) {
             // Map
             Map(position: $position) {
-                ForEach(vm.filteredVenues) { venue in
+                ForEach(vm.filteredVenues.filter(vm.matchesDayFilter)) { venue in
                     Annotation("", coordinate: venue.coordinate, anchor: .bottom) {
                         VenuePinView(
                             venue: venue,
@@ -82,6 +82,22 @@ struct MapDiscoveryView: View {
                 vm.visibleRegion = ctx.region
             }
             .ignoresSafeArea()
+
+            // Day filter chip floats below the search bar so users can
+             // switch which day the pins reflect without leaving the map.
+            if vm.sheetSize != .full {
+                VStack {
+                    HStack {
+                        DayFilterChip(vm: vm)
+                            .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+                        Spacer()
+                    }
+                    .padding(.leading, 16)
+                    .padding(.top, 120)
+                    Spacer()
+                }
+                .transition(.opacity)
+            }
 
             // Locate FAB (top-right corner, below search bar). Simple fixed position.
             if vm.sheetSize != .full {
@@ -272,12 +288,8 @@ struct VenuePinView: View {
     let isDark: Bool
     let onTap: () -> Void
 
-    private var bg: Color {
-        isSelected || venue.isEndingSoon ? accent : (isDark ? Color(hex: "#1f1a2a") : .white)
-    }
-    private var fg: Color {
-        isSelected || venue.isEndingSoon ? Color(hex: "#1a1008") : (isDark ? Color(hex: "#f5ead6") : Color(hex: "#1a1512"))
-    }
+    private var bg: Color { accent }
+    private var fg: Color { Color(hex: "#1a1008") }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -295,20 +307,18 @@ struct VenuePinView: View {
 
                 PinTail(color: bg)
             } else {
-                // Default: compact dot — accent for ending-soon, neutral
-                // otherwise. Keeps the map readable when many bars sit
-                // close together.
+                // Default: accent dot with a white ring so it pops against
+                // any map tile. Ending-soon pins get a subtle glow.
                 Circle()
-                    .fill(bg)
-                    .frame(width: venue.isEndingSoon ? 14 : 12,
-                           height: venue.isEndingSoon ? 14 : 12)
-                    .overlay(
-                        Circle().strokeBorder(
-                            isDark ? Color.white.opacity(0.35) : Color.black.opacity(0.2),
-                            lineWidth: 1
-                        )
+                    .fill(accent)
+                    .frame(width: venue.isEndingSoon ? 16 : 13,
+                           height: venue.isEndingSoon ? 16 : 13)
+                    .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                    .shadow(
+                        color: venue.isEndingSoon ? accent.opacity(0.55) : .black.opacity(0.3),
+                        radius: venue.isEndingSoon ? 6 : 3,
+                        y: 1
                     )
-                    .shadow(color: .black.opacity(0.25), radius: 3, y: 1)
             }
         }
         .animation(.spring(response: 0.25, dampingFraction: 0.75), value: isSelected)
