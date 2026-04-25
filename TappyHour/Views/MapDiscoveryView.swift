@@ -223,33 +223,31 @@ private struct BottomSheetContent: View {
                     .padding(.top, 14)
                     .padding(.bottom, 10)
 
-                    // Role-gated chips — same as ListFeedView
-                    if vm.isAdmin || vm.canManageAny {
-                        HStack(spacing: 8) {
-                            if vm.isAdmin {
-                                Button { vm.isAddingVenue = true } label: {
-                                    chipLabel(icon: "plus", text: "Add bar",
-                                              fg: t.text, bg: t.card, stroke: t.cardBorder)
-                                }
+                    HStack(spacing: 8) {
+                        DayFilterChip(vm: vm)
+                        if vm.isAdmin {
+                            Button { vm.isAddingVenue = true } label: {
+                                chipLabel(icon: "plus", text: "Add bar",
+                                          fg: t.text, bg: t.card, stroke: t.cardBorder)
                             }
-                            // Manager chip: only for non-admin managers (jumps
-                            // straight to their one bar). Admins use the pencil
-                            // on each venue detail to edit whichever bar they
-                            // want — no need for a "pick first" shortcut.
-                            if vm.canManageAny && !vm.isAdmin {
-                                Button {
-                                    vm.adminVenueId = vm.venues.first(where: { vm.managedVenueIds.contains($0.id) })?.id
-                                } label: {
-                                    chipLabel(icon: "gear", text: "Manager",
-                                              fg: t.accent, bg: t.accent.opacity(0.12),
-                                              stroke: t.accent.opacity(0.33))
-                                }
-                            }
-                            Spacer()
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 12)
+                        // Manager chip: only for non-admin managers (jumps
+                        // straight to their one bar). Admins use the pencil
+                        // on each venue detail to edit whichever bar they
+                        // want — no need for a "pick first" shortcut.
+                        if vm.canManageAny && !vm.isAdmin {
+                            Button {
+                                vm.adminVenueId = vm.venues.first(where: { vm.managedVenueIds.contains($0.id) })?.id
+                            } label: {
+                                chipLabel(icon: "gear", text: "Manager",
+                                          fg: t.accent, bg: t.accent.opacity(0.12),
+                                          stroke: t.accent.opacity(0.33))
+                            }
+                        }
+                        Spacer()
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
 
                     ScrollView {
                         LazyVStack(spacing: 10) {
