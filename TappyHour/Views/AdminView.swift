@@ -395,7 +395,7 @@ struct AdminView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(.system(size: 11)).foregroundStyle(t.muted)
             TextField("$", value: Binding(get: { value }, set: { onChange($0) }),
-                      format: .currency(code: "USD").precision(.fractionLength(0)))
+                      format: .currency(code: "USD").precision(.fractionLength(0...2)))
                 .font(.system(size: 14, weight: accent ? .semibold : .regular))
                 .foregroundStyle(accent ? t.accent : t.muted)
                 .tint(t.accent)
