@@ -11,7 +11,6 @@ struct VenueDetailView: View {
     @Environment(\.openURL) private var openURL
 
     private var t: AppTheme { vm.theme }
-    private var isSaved: Bool { vm.savedIds.contains(venue.id) }
     private var dayData: DaySchedule? { venue.deal(for: selectedDay) }
     private var activeDays: [DayKey] { venue.activeDays }
 
@@ -28,7 +27,7 @@ struct VenueDetailView: View {
             }
             .ignoresSafeArea(edges: .top)
 
-            // Back + save buttons overlay
+            // Back + share buttons overlay
             HStack {
                 Button { vm.openVenueId = nil } label: {
                     Image(systemName: "chevron.left")
@@ -63,15 +62,6 @@ struct VenueDetailView: View {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(t.text)
-                            .frame(width: 40, height: 40)
-                            .background(t.card.opacity(0.9))
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
-                    }
-                    Button { vm.toggleSave(venue.id) } label: {
-                        Image(systemName: isSaved ? "heart.fill" : "heart")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(isSaved ? t.accent : t.text)
                             .frame(width: 40, height: 40)
                             .background(t.card.opacity(0.9))
                             .clipShape(Circle())
@@ -125,7 +115,7 @@ struct VenueDetailView: View {
                     .frame(width: geo.size.width, height: geo.size.height)
                     .clipped()
                 }
-                // Dark gradient at top so back/share/heart icons stay readable
+                // Dark gradient at top so back/share icons stay readable
                 LinearGradient(
                     colors: [.black.opacity(0.35), .clear],
                     startPoint: .top, endPoint: .center

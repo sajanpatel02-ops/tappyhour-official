@@ -8,7 +8,6 @@ struct VenueCard: View {
     private var today: DaySchedule? { venue.deal(for: TODAY) }
     private var headline: String { today?.headline ?? "No happy hour today" }
     private var endTime: String? { today?.endTime }
-    private var isSaved: Bool { vm.savedIds.contains(venue.id) }
 
     var body: some View {
         Button { vm.openVenue(venue.id) } label: {
@@ -96,14 +95,6 @@ struct VenueCard: View {
                 .foregroundStyle(t.muted)
             }
             Spacer(minLength: 4)
-            Button {
-                vm.toggleSave(venue.id)
-            } label: {
-                Image(systemName: isSaved ? "heart.fill" : "heart")
-                    .font(.system(size: 18))
-                    .foregroundStyle(isSaved ? t.accent : t.muted)
-            }
-            .buttonStyle(.plain)
         }
     }
 

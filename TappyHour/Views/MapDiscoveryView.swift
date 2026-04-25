@@ -64,12 +64,10 @@ struct MapDiscoveryView: View {
                             accent: t.accent,
                             isDark: vm.isDark
                         ) {
-                            withAnimation(.spring(duration: 0.25)) {
-                                if vm.selectedVenueId == venue.id {
-                                    vm.openVenue(venue.id)
-                                } else {
-                                    vm.selectPin(venue.id)
-                                }
+                            if vm.selectedVenueId == venue.id {
+                                vm.openVenue(venue.id)
+                            } else {
+                                vm.selectPin(venue.id)
                             }
                         }
                     }
@@ -309,19 +307,23 @@ struct VenuePinView: View {
             } else {
                 // Default: accent dot with a white ring so it pops against
                 // any map tile. Ending-soon pins get a subtle glow.
+                // Wrapped in a 44pt transparent hit area so it's actually
+                // tappable — the visible dot alone is too small.
                 Circle()
                     .fill(accent)
-                    .frame(width: venue.isEndingSoon ? 16 : 13,
-                           height: venue.isEndingSoon ? 16 : 13)
+                    .frame(width: venue.isEndingSoon ? 18 : 15,
+                           height: venue.isEndingSoon ? 18 : 15)
                     .overlay(Circle().strokeBorder(.white, lineWidth: 2))
                     .shadow(
                         color: venue.isEndingSoon ? accent.opacity(0.55) : .black.opacity(0.3),
                         radius: venue.isEndingSoon ? 6 : 3,
                         y: 1
                     )
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
         }
-        .animation(.spring(response: 0.25, dampingFraction: 0.75), value: isSelected)
+        .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isSelected)
         .onTapGesture(perform: onTap)
     }
 }

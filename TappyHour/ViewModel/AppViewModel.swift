@@ -53,7 +53,6 @@ class AppViewModel {
     var openVenueId: String? = nil
     var sheetSize: SheetSize = .half
 
-    var savedIds: Set<String> = []
     var query: String = ""
     var isSearchActive: Bool = false
 
@@ -189,7 +188,6 @@ class AppViewModel {
         try? await AuthService.shared.signOut()
         isLoggedIn = false; showLogin = true
         isAdmin = false; managedVenueIds = []
-        savedIds = []
         query = ""
     }
 
@@ -271,10 +269,6 @@ class AppViewModel {
         guard var v = venue(id) else { return nil }
         if let override = venueOverrides[id] { v.schedule = override }
         return v
-    }
-
-    func toggleSave(_ id: String) {
-        if savedIds.contains(id) { savedIds.remove(id) } else { savedIds.insert(id) }
     }
 
     func selectPin(_ id: String?) {
