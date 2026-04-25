@@ -58,18 +58,7 @@ struct MapDiscoveryView: View {
             Map(position: $position) {
                 ForEach(vm.filteredVenues.filter(vm.matchesDayFilter)) { venue in
                     Annotation("", coordinate: venue.coordinate, anchor: .bottom) {
-                        VenuePinView(
-                            venue: venue,
-                            isSelected: vm.selectedVenueId == venue.id,
-                            accent: t.accent,
-                            isDark: vm.isDark
-                        ) {
-                            if vm.selectedVenueId == venue.id {
-                                vm.openVenue(venue.id)
-                            } else {
-                                vm.selectPin(venue.id)
-                            }
-                        }
+                        VenuePinView(venue: venue, vm: vm)
                     }
                 }
                 UserAnnotation()
@@ -281,13 +270,20 @@ private struct BottomSheetContent: View {
 // MARK: - Venue Pin
 struct VenuePinView: View {
     let venue: Venue
-    let isSelected: Bool
-    let accent: Color
-    let isDark: Bool
-    let onTap: () -> Void
+    @Bindable var vm: AppViewModel
 
+    private var isSelected: Bool { vm.selectedVenueId == venue.id }
+    private var accent: Color { vm.theme.accent }
     private var bg: Color { accent }
     private var fg: Color { Color(hex: "#1a1008") }
+
+    private func onTap() {
+        if isSelected {
+            vm.openVenue(venue.id)
+        } else {
+            vm.selectPin(venue.id)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
