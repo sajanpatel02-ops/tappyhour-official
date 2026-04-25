@@ -6,20 +6,19 @@ struct VenueCard: View {
 
     private var t: AppTheme { vm.theme }
     private var today: DaySchedule? { venue.deal(for: TODAY) }
-    private var headline: String { today?.headline ?? "No happy hour today" }
-    private var endTime: String? { today?.endTime }
+    private var timeWindow: String? {
+        guard let d = today else { return nil }
+        let s = d.startTime, e = d.endTime
+        if !s.isEmpty, !e.isEmpty { return "\(s)–\(e)" }
+        return e.isEmpty ? nil : e
+    }
 
     var body: some View {
         Button { vm.openVenue(venue.id) } label: {
             HStack(spacing: 14) {
                 venueThumbnail
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 6) {
                     headerRow
-                    Text(headline)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(t.text)
-                        .lineLimit(1)
-                        .tracking(-0.1)
                     metaRow
                 }
             }
@@ -83,12 +82,14 @@ struct VenueCard: View {
                     Text(venue.neighborhood)
                     dot
                     Text(venue.price)
-                    dot
-                    HStack(spacing: 3) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(Color(hex: "#f2a03d"))
-                        Text(String(format: "%.1f", venue.rating))
+                    if venue.rating > 0 {
+                        dot
+                        HStack(spacing: 3) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Color(hex: "#f2a03d"))
+                            Text(String(format: "%.1f", venue.rating))
+                        }
                     }
                 }
                 .font(.system(size: 12))
@@ -108,11 +109,11 @@ struct VenueCard: View {
                     Text("Ends in \(venue.endsIn)m")
                         .fontWeight(.semibold)
                         .foregroundStyle(t.accent)
-                } else if let end = endTime {
-                    Text(end)
+                } else if let window = timeWindow {
+                    Text(window)
                         .foregroundStyle(t.muted)
                 } else {
-                    Text("Closed")
+                    Text("No happy hour today")
                         .foregroundStyle(t.muted)
                 }
             }
