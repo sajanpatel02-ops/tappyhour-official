@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var vm = AppViewModel()
+    @State private var showDeleteConfirm = false
+    @State private var isDeletingAccount = false
 
     var body: some View {
         let t = vm.theme
@@ -55,6 +57,35 @@ struct ContentView: View {
         .sheet(isPresented: $vm.isAddingVenue) {
             AddVenueSheet(vm: vm)
         }
+        .confirmationDialog(
+            "Delete your account?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete account", role: .destructive) {
+                isDeletingAccount = true
+                Task {
+                    _ = await vm.deleteAccount()
+                    isDeletingAccount = false
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently deletes your account, your saved bars, suggestions, and reports. This can't be undone.")
+        }
+        .overlay {
+            if isDeletingAccount {
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    ProgressView("Deleting account…")
+                        .padding(20)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: isDeletingAccount)
     }
 
     @ViewBuilder
@@ -145,8 +176,12 @@ struct ContentView: View {
                 Menu {
                     if vm.isLoggedIn {
                         Text("Signed in")
-                        Button("Sign out", role: .destructive) {
+                        Button("Sign out") {
                             Task { await vm.signOut() }
+                        }
+                        Divider()
+                        Button("Delete account", role: .destructive) {
+                            showDeleteConfirm = true
                         }
                     } else {
                         Button("Sign in") { vm.showLogin = true }

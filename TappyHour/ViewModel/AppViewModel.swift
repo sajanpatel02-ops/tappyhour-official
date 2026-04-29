@@ -191,6 +191,23 @@ class AppViewModel {
         query = ""
     }
 
+    /// Permanently delete the signed-in user's account. Returns true on
+    /// success so the caller can dismiss UI; sets `authError` on failure.
+    @MainActor
+    func deleteAccount() async -> Bool {
+        do {
+            try await AuthService.shared.deleteAccount()
+            isLoggedIn = false; showLogin = true
+            isAdmin = false; managedVenueIds = []
+            mySuggestions = []; myReportedVenueIds = []
+            query = ""
+            return true
+        } catch {
+            authError = "Couldn't delete account: \(error.localizedDescription)"
+            return false
+        }
+    }
+
     @MainActor
     func restoreSession() async {
         if AuthService.shared.currentUser() != nil {

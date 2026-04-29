@@ -73,6 +73,19 @@ final class AuthService: NSObject {
 
     func signOut() async throws { try await Supa.client.auth.signOut() }
 
+    /// Permanently deletes the signed-in user's account and all server-side
+    /// data. Calls the `delete-account` Edge Function (service-role key
+    /// required for `auth.admin.deleteUser`, which can't ship in the app).
+    /// Required by App Store Review Guideline 5.1.1(v).
+    func deleteAccount() async throws {
+        guard currentUser() != nil else { return }
+        _ = try await Supa.client.functions.invoke(
+            "delete-account",
+            options: FunctionInvokeOptions(method: .post)
+        )
+        try? await Supa.client.auth.signOut()
+    }
+
     func currentUser() -> User? { Supa.client.auth.currentUser }
 
     /// Calls the `is_app_admin()` RPC.
