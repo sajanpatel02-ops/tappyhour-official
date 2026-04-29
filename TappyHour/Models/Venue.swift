@@ -58,6 +58,7 @@ struct Venue: Identifiable {
     var scheduleUpdatedAt: Date? = nil
     var photoUrl: String? = nil
     var dealsSourceUrl: String? = nil
+    var phone: String? = nil
 
     var isEndingSoon: Bool { endsIn <= 30 }
     var shortName: String { name.components(separatedBy: " ").last ?? name }

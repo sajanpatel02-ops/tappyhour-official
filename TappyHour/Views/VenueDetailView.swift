@@ -56,17 +56,6 @@ struct VenueDetailView: View {
                                 .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
                         }
                     }
-                    Button {
-                        // Share action
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(t.text)
-                            .frame(width: 40, height: 40)
-                            .background(t.card.opacity(0.9))
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
-                    }
                 }
             }
             .padding(.horizontal, 14)
@@ -484,6 +473,16 @@ struct VenueDetailView: View {
     }
 
     // MARK: - Actions
+
+    /// Strips formatting from the phone string so `tel:` accepts it.
+    /// "+1 (312) 555-1234" → "+13125551234"
+    private var phoneURL: URL? {
+        guard let raw = venue.phone, !raw.isEmpty else { return nil }
+        let digits = raw.filter { "+0123456789".contains($0) }
+        guard !digits.isEmpty else { return nil }
+        return URL(string: "tel://\(digits)")
+    }
+
     private var actionButtons: some View {
         HStack(spacing: 10) {
             Button {
@@ -499,20 +498,22 @@ struct VenueDetailView: View {
                     .background(t.accent)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            Button {
-                // Call action
-            } label: {
-                Label("Call", systemImage: "phone")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(t.text)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 13)
-                    .background(t.card)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(t.cardBorder, lineWidth: 0.5)
-                    )
+            if let url = phoneURL {
+                Button {
+                    openURL(url)
+                } label: {
+                    Label("Call", systemImage: "phone")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(t.text)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(t.card)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(t.cardBorder, lineWidth: 0.5)
+                        )
+                }
             }
         }
     }

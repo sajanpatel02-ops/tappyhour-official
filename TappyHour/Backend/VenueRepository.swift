@@ -152,7 +152,8 @@ enum VenueRepository {
             schedule: dict,
             scheduleUpdatedAt: parseTimestamp(v.schedule_updated_at),
             photoUrl: v.photo_url,
-            dealsSourceUrl: v.deals_source_url
+            dealsSourceUrl: v.deals_source_url,
+            phone: v.phone
         )
     }
 
