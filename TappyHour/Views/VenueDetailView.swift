@@ -8,7 +8,13 @@ struct VenueDetailView: View {
     @State private var reportSubmitting = false
     @State private var reportError: String? = nil
     @State private var reportJustSubmitted = false
+    @State private var dragOffset: CGFloat = 0
     @Environment(\.openURL) private var openURL
+
+    /// Distance the user has to drag right before we treat it as a "back".
+    /// Past this threshold on release, we dismiss; otherwise the view
+    /// springs back into place.
+    private let dismissThreshold: CGFloat = 80
 
     private var t: AppTheme { vm.theme }
     private var dayData: DaySchedule? { venue.deal(for: selectedDay) }
@@ -62,7 +68,33 @@ struct VenueDetailView: View {
             .padding(.top, 56)
         }
         .ignoresSafeArea(edges: .top)
+        .offset(x: max(0, dragOffset))
         .transition(.move(edge: .trailing))
+        .simultaneousGesture(
+            // Edge swipe-to-dismiss. Only starts when the touch begins in
+            // the first ~30pt of the screen so it doesn't fight the
+            // ScrollView's vertical drag for the rest of the view.
+            DragGesture(minimumDistance: 8)
+                .onChanged { value in
+                    let startedAtEdge = value.startLocation.x < 30
+                    let isHorizontal = abs(value.translation.width) > abs(value.translation.height)
+                    guard startedAtEdge, isHorizontal, value.translation.width > 0 else { return }
+                    dragOffset = value.translation.width
+                }
+                .onEnded { value in
+                    let startedAtEdge = value.startLocation.x < 30
+                    if startedAtEdge,
+                       value.translation.width > dismissThreshold ||
+                       value.predictedEndTranslation.width > dismissThreshold * 2 {
+                        // Pass the threshold OR be flicking fast enough → dismiss.
+                        vm.openVenueId = nil
+                    } else {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                            dragOffset = 0
+                        }
+                    }
+                }
+        )
         .sheet(item: $presentedURL) { item in
             SafariView(url: item.url)
                 .ignoresSafeArea()
