@@ -10,45 +10,57 @@ struct ContentView: View {
         ZStack {
             t.bg.ignoresSafeArea()
 
-            if !vm.showLogin {
-                mainContent
-            }
-
-            // Login overlay
-            if vm.showLogin {
-                LoginView(vm: vm)
+            // Kill switch — when set in Supabase `app_config`, replaces the
+            // entire app with a maintenance screen. Nothing else renders.
+            if vm.appConfig.isKilled {
+                MaintenanceView(vm: vm)
                     .transition(.opacity)
-                    .zIndex(10)
-            }
+            } else {
+                if !vm.showLogin {
+                    mainContent
+                }
 
-            // Venue detail overlay
-            if let id = vm.openVenueId, let venue = vm.resolvedVenue(id) {
-                VenueDetailView(venue: venue, vm: vm)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
-                    .zIndex(8)
-            }
+                // Login overlay
+                if vm.showLogin {
+                    LoginView(vm: vm)
+                        .transition(.opacity)
+                        .zIndex(10)
+                }
 
-            // Admin overlay
-            if let id = vm.adminVenueId, let venue = vm.resolvedVenue(id) {
-                AdminView(venue: venue, vm: vm)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .zIndex(9)
-            }
+                // Venue detail overlay
+                if let id = vm.openVenueId, let venue = vm.resolvedVenue(id) {
+                    VenueDetailView(venue: venue, vm: vm)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        .zIndex(8)
+                }
 
-            // Search overlay
-            if vm.isSearchActive {
-                SearchOverlayView(vm: vm)
-                    .transition(.opacity)
-                    .zIndex(7)
+                // Admin overlay
+                if let id = vm.adminVenueId, let venue = vm.resolvedVenue(id) {
+                    AdminView(venue: venue, vm: vm)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .zIndex(9)
+                }
+
+                // Search overlay
+                if vm.isSearchActive {
+                    SearchOverlayView(vm: vm)
+                        .transition(.opacity)
+                        .zIndex(7)
+                }
             }
         }
         .animation(.spring(duration: 0.3), value: vm.showLogin)
         .animation(.spring(duration: 0.3), value: vm.openVenueId)
         .animation(.spring(duration: 0.3), value: vm.adminVenueId)
         .animation(.easeInOut(duration: 0.2), value: vm.isSearchActive)
+        .animation(.easeInOut(duration: 0.25), value: vm.appConfig.isKilled)
         .preferredColorScheme(vm.isDark ? .dark : .light)
         .task {
             LocationManager.shared.requestAndStart()
+            // Refresh kill switch / feature flags first — if killed, we
+            // skip the rest so we don't hit other endpoints under load.
+            await vm.refreshAppConfig()
+            guard !vm.appConfig.isKilled else { return }
             await vm.restoreSession()
             await vm.loadVenues()
             await vm.loadMySuggestions()

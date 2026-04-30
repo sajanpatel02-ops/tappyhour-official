@@ -86,7 +86,21 @@ struct ExternalVenueSheet: View {
 
     @ViewBuilder
     private var actionButton: some View {
-        if alreadyRequested {
+        if !vm.appConfig.allowSuggestions {
+            // Gated by remote config — `allow_suggestions = false` in
+            // Supabase `app_config` hides the request flow without an
+            // app update (e.g. if we're being spammed).
+            HStack(spacing: 8) {
+                Image(systemName: "moon.zzz")
+                Text("Requests are paused")
+            }
+            .font(.system(size: 14))
+            .foregroundStyle(vm.theme.muted)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(vm.theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        } else if alreadyRequested {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                 Text("Requested")

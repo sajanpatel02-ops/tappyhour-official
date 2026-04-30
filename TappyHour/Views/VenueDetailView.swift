@@ -226,9 +226,13 @@ struct VenueDetailView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 20)
 
-            reportOutdatedRow
-                .padding(.horizontal, 20)
-                .padding(.bottom, 24)
+            // Gated by remote config — set `allow_reports = false` in
+            // Supabase `app_config` to hide reporting without an app update.
+            if vm.appConfig.allowReports {
+                reportOutdatedRow
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 24)
+            }
         }
     }
 

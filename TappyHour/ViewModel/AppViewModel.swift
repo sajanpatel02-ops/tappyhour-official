@@ -73,6 +73,15 @@ class AppViewModel {
     var isLoading: Bool = false
     var loadError: String? = nil
 
+    /// Remote config / kill switch. Seeded from cache on init so the very
+    /// first frame already has a value; refreshed from the server on launch.
+    var appConfig: AppConfig = AppConfigService.cached() ?? .default
+
+    @MainActor
+    func refreshAppConfig() async {
+        appConfig = await AppConfigService.fetch()
+    }
+
     /// The signed-in user's past venue requests. Loaded on start so we can
     /// mark already-requested bars with a "Requested" pill in search.
     var mySuggestions: [VenueRepository.VenueSuggestion] = []
