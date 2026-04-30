@@ -145,14 +145,6 @@ struct VenueDetailView: View {
                     .minimumScaleFactor(0.6)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
-                    HStack(spacing: 3) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 11))
-                            .foregroundStyle(Color(hex: "#f2a03d"))
-                        Text(String(format: "%.1f", venue.rating))
-                    }
-                    Text("(\(venue.reviews))")
-                    Text("·")
                     Text(venue.neighborhood)
                     Text("·")
                     Text(venue.price)

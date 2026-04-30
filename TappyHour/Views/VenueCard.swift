@@ -82,15 +82,6 @@ struct VenueCard: View {
                     Text(venue.neighborhood)
                     dot
                     Text(venue.price)
-                    if venue.rating > 0 {
-                        dot
-                        HStack(spacing: 3) {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 10))
-                                .foregroundStyle(Color(hex: "#f2a03d"))
-                            Text(String(format: "%.1f", venue.rating))
-                        }
-                    }
                 }
                 .font(.system(size: 12))
                 .foregroundStyle(t.muted)
