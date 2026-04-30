@@ -173,6 +173,7 @@ class AppViewModel {
             try await AuthService.shared.signInWithApple()
             isLoggedIn = true; showLogin = false
             await refreshRole()
+            await reloadAfterAuthChange()
         } catch {
             authError = "Apple sign-in failed: \(error.localizedDescription)"
         }
@@ -186,10 +187,21 @@ class AppViewModel {
             try await AuthService.shared.signInWithGoogle()
             isLoggedIn = true; showLogin = false
             await refreshRole()
+            await reloadAfterAuthChange()
         } catch {
             authError = "Google sign-in failed: \(error.localizedDescription)"
         }
         isAuthenticating = false
+    }
+
+    /// Re-pulls everything that depends on the auth session. Called after
+    /// every sign-in so an empty-from-signed-out state gets replaced with
+    /// fresh data — and so RLS-gated rows (suggestions, reports) appear.
+    @MainActor
+    private func reloadAfterAuthChange() async {
+        await loadVenues()
+        await loadMySuggestions()
+        await loadMyReports()
     }
 
     @MainActor
@@ -197,6 +209,7 @@ class AppViewModel {
         try? await AuthService.shared.signOut()
         isLoggedIn = false; showLogin = true
         isAdmin = false; managedVenueIds = []
+        mySuggestions = []; myReportedVenueIds = []
         query = ""
     }
 
