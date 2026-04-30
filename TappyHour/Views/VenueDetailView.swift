@@ -146,8 +146,6 @@ struct VenueDetailView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 8) {
                     Text(venue.neighborhood)
-                    Text("·")
-                    Text(venue.price)
                 }
                 .font(.system(size: 14))
                 .foregroundStyle(t.muted)

@@ -80,8 +80,6 @@ struct VenueCard: View {
                     .tracking(-0.3)
                 HStack(spacing: 6) {
                     Text(venue.neighborhood)
-                    dot
-                    Text(venue.price)
                 }
                 .font(.system(size: 12))
                 .foregroundStyle(t.muted)
