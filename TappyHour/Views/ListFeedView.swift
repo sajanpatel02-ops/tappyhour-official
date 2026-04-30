@@ -6,8 +6,9 @@ struct ListFeedView: View {
     private var t: AppTheme { vm.theme }
     private var venues: [Venue] {
         if vm.viewMode == .feed {
-            // Feed mode: "ending soon" — sort by time remaining, not distance.
-            return vm.filteredVenues.sorted { $0.endsIn < $1.endsIn }
+            // Feed mode: "ending soon" — live-now venues by minutes remaining,
+            // closed/upcoming sink to the bottom (Int.max sort key).
+            return vm.filteredVenues.sorted { $0.endsInSortKey < $1.endsInSortKey }
         }
         // List mode mirrors the map: only venues in the current map region,
         // sorted nearest-first from the user's location.

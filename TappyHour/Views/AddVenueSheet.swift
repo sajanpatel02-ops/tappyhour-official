@@ -132,7 +132,6 @@ struct AddVenueSheet: View {
                 vibe: nv.vibe,
                 rating: 0, reviews: 0, distance: 0, walk: 0,
                 price: String(repeating: "$", count: max(1, min(4, nv.priceTier))),
-                endsIn: 9999,
                 coordinate: CLLocationCoordinate2D(latitude: nv.lat, longitude: nv.lng),
                 tags: [],
                 schedule: [:]

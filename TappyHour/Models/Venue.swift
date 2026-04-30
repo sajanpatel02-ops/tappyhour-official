@@ -50,7 +50,6 @@ struct Venue: Identifiable {
     let distance: Double
     let walk: Int
     let price: String
-    let endsIn: Int
     let coordinate: CLLocationCoordinate2D
     let tags: [String]
     // Keys present = has happy hour that day; missing key = no happy hour
@@ -60,8 +59,81 @@ struct Venue: Identifiable {
     var dealsSourceUrl: String? = nil
     var phone: String? = nil
 
-    var isEndingSoon: Bool { endsIn <= 30 }
+    // MARK: - Live time-based status (computed against `Date.now`)
+
+    /// Minutes until today's happy hour ends, or nil if there's no happy
+    /// hour today / it's already over / we couldn't parse the time.
+    /// Negative values are clamped to nil (already ended).
+    var minutesUntilEnd: Int? {
+        guard let end = todayEndDate() else { return nil }
+        let mins = Int(end.timeIntervalSince(Date()) / 60)
+        return mins >= 0 ? mins : nil
+    }
+
+    /// Minutes until today's happy hour starts, or nil if there's no
+    /// happy hour today, it's already started, or we couldn't parse.
+    var minutesUntilStart: Int? {
+        guard let start = todayStartDate() else { return nil }
+        let mins = Int(start.timeIntervalSince(Date()) / 60)
+        return mins > 0 ? mins : nil
+    }
+
+    /// Currently inside today's happy hour window.
+    var isLiveNow: Bool {
+        guard let start = todayStartDate(), let end = todayEndDate() else { return false }
+        let now = Date()
+        return now >= start && now < end
+    }
+
+    /// Live AND ≤30 min remaining — drives the accent badge / pin glow.
+    var isEndingSoon: Bool {
+        guard isLiveNow, let m = minutesUntilEnd else { return false }
+        return m <= 30
+    }
+
+    /// Not started yet, but kicks off within 30 min.
+    var isStartingSoon: Bool {
+        guard let m = minutesUntilStart else { return false }
+        return m <= 30
+    }
+
+    /// Sort key for "ending soonest" feed mode. Live-now venues sort by
+    /// minutes-until-end (ascending). Everything else sinks to the bottom.
+    var endsInSortKey: Int {
+        if let m = minutesUntilEnd, isLiveNow { return m }
+        return Int.max
+    }
+
+    /// Back-compat read-only alias used in a couple of detail views.
+    var endsIn: Int { minutesUntilEnd ?? 0 }
+
     var shortName: String { name.components(separatedBy: " ").last ?? name }
+
+    // MARK: - Internal date helpers
+
+    /// Combines today's date with the schedule's start time string.
+    /// Returns nil if no schedule today or the string isn't parseable.
+    private func todayStartDate() -> Date? { dateForTodayTime(deal(for: TODAY)?.startTime) }
+    private func todayEndDate()   -> Date? { dateForTodayTime(deal(for: TODAY)?.endTime) }
+
+    private func dateForTodayTime(_ raw: String?) -> Date? {
+        guard let raw, !raw.isEmpty else { return nil }
+        // Normalize "16:00", "4:00 PM", "4 PM", etc.
+        let formats = ["HH:mm", "H:mm", "h:mm a", "h a", "ha", "h:mma"]
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.timeZone = .current
+        for f in formats {
+            fmt.dateFormat = f
+            if let parsed = fmt.date(from: raw.uppercased()) ?? fmt.date(from: raw) {
+                let comps = cal.dateComponents([.hour, .minute], from: parsed)
+                return cal.date(byAdding: comps, to: today)
+            }
+        }
+        return nil
+    }
 
     func deal(for day: DayKey) -> DaySchedule? { schedule[day] }
     var activeDays: [DayKey] { DayKey.allCases.filter { schedule[$0] != nil } }

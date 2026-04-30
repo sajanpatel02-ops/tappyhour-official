@@ -300,17 +300,18 @@ struct VenuePinView: View {
                 PinTail(color: bg)
             } else {
                 // Default: accent dot with a white ring so it pops against
-                // any map tile. Ending-soon pins get a subtle glow.
-                // Wrapped in a 44pt transparent hit area so it's actually
-                // tappable — the visible dot alone is too small.
+                // any map tile. Live + ending-soon and starting-soon pins
+                // get a subtle accent glow. Wrapped in a 44pt transparent
+                // hit area so it's actually tappable.
+                let highlighted = venue.isEndingSoon || venue.isStartingSoon
                 Circle()
                     .fill(accent)
-                    .frame(width: venue.isEndingSoon ? 18 : 15,
-                           height: venue.isEndingSoon ? 18 : 15)
+                    .frame(width: highlighted ? 18 : 15,
+                           height: highlighted ? 18 : 15)
                     .overlay(Circle().strokeBorder(.white, lineWidth: 2))
                     .shadow(
-                        color: venue.isEndingSoon ? accent.opacity(0.55) : .black.opacity(0.3),
-                        radius: venue.isEndingSoon ? 6 : 3,
+                        color: highlighted ? accent.opacity(0.55) : .black.opacity(0.3),
+                        radius: highlighted ? 6 : 3,
                         y: 1
                     )
                     .frame(width: 44, height: 44)

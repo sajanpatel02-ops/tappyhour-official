@@ -21,7 +21,8 @@
       "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha /Users/sajanpatel/TappyHour/TappyHour/Assets.xcassets/AppIcon.appiconset/AppIcon.png)",
       "Bash(sips -s format jpeg AppIcon.png --out AppIcon.jpg)",
       "Bash(sips -s format png AppIcon.jpg --out AppIcon.png)",
-      "Bash(sips -g hasAlpha -g pixelWidth -g pixelHeight AppIcon.png)"
+      "Bash(sips -g hasAlpha -g pixelWidth -g pixelHeight AppIcon.png)",
+      "Bash(perl -i -pe 's/, endsIn: \\\\d+,/,/g' TappyHour/Data/SampleData.swift)"
     ]
   }
 }

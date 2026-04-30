@@ -146,7 +146,6 @@ enum VenueRepository {
             distance: 0,
             walk: 0,
             price: priceString(v.price_tier ?? 2),
-            endsIn: 9999,
             coordinate: CLLocationCoordinate2D(latitude: v.lat ?? 0, longitude: v.lng ?? 0),
             tags: v.tags ?? [],
             schedule: dict,

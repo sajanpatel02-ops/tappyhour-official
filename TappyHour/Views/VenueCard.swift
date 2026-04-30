@@ -6,6 +6,10 @@ struct VenueCard: View {
 
     private var t: AppTheme { vm.theme }
     private var today: DaySchedule? { venue.deal(for: TODAY) }
+    /// Accent color for ending- or starting-soon highlighting; muted otherwise.
+    private var timeColor: Color {
+        (venue.isEndingSoon || venue.isStartingSoon) ? t.accent : t.muted
+    }
     private var timeWindow: String? {
         guard let d = today else { return nil }
         let s = d.startTime, e = d.endTime
@@ -93,18 +97,19 @@ struct VenueCard: View {
             HStack(spacing: 4) {
                 Image(systemName: "clock")
                     .font(.system(size: 11))
-                    .foregroundStyle(venue.isEndingSoon ? t.accent : t.muted)
-                if venue.isEndingSoon, today != nil {
-                    Text("Ends in \(venue.endsIn)m")
-                        .fontWeight(.semibold)
-                        .foregroundStyle(t.accent)
-                } else if let window = timeWindow {
-                    Text(window)
-                        .foregroundStyle(t.muted)
-                } else {
-                    Text("No happy hour today")
-                        .foregroundStyle(t.muted)
+                    .foregroundStyle(timeColor)
+                Group {
+                    if venue.isEndingSoon, let m = venue.minutesUntilEnd {
+                        Text("Ends in \(m)m").fontWeight(.semibold)
+                    } else if venue.isStartingSoon, let m = venue.minutesUntilStart {
+                        Text("Starts in \(m)m").fontWeight(.semibold)
+                    } else if let window = timeWindow {
+                        Text(window)
+                    } else {
+                        Text("No happy hour today")
+                    }
                 }
+                .foregroundStyle(timeColor)
             }
             .font(.system(size: 11.5))
 

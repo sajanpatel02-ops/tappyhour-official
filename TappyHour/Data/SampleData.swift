@@ -29,7 +29,7 @@ let VENUES: [Venue] = [
     Venue(
         id: "v1", name: "The Copper Jug", neighborhood: "West Loop",
         cuisine: "American", vibe: "Cozy", rating: 4.6, reviews: 842,
-        distance: 0.3, walk: 6, price: "$$", endsIn: 94,
+        distance: 0.3, walk: 6, price: "$$",
         coordinate: CLLocationCoordinate2D(latitude: 41.8825, longitude: -87.6479),
         tags: ["Cocktails", "Beer"],
         schedule: [
@@ -67,7 +67,7 @@ let VENUES: [Venue] = [
     Venue(
         id: "v2", name: "Fulton & Fig", neighborhood: "Fulton Market",
         cuisine: "Mediterranean", vibe: "Date night", rating: 4.8, reviews: 1204,
-        distance: 0.5, walk: 10, price: "$$$", endsIn: 22,
+        distance: 0.5, walk: 10, price: "$$$",
         coordinate: CLLocationCoordinate2D(latitude: 41.8866, longitude: -87.6498),
         tags: ["Wine", "Cocktails"],
         schedule: [
@@ -102,7 +102,7 @@ let VENUES: [Venue] = [
     Venue(
         id: "v3", name: "Lower East Tap", neighborhood: "River North",
         cuisine: "Pub", vibe: "Lively", rating: 4.3, reviews: 562,
-        distance: 0.8, walk: 14, price: "$", endsIn: 152,
+        distance: 0.8, walk: 14, price: "$",
         coordinate: CLLocationCoordinate2D(latitude: 41.8905, longitude: -87.6325),
         tags: ["Beer"],
         schedule: Dictionary(uniqueKeysWithValues: DayKey.allCases.map { day in
@@ -117,7 +117,7 @@ let VENUES: [Venue] = [
     Venue(
         id: "v4", name: "Maison Verre", neighborhood: "West Loop",
         cuisine: "French", vibe: "Date night", rating: 4.7, reviews: 918,
-        distance: 0.4, walk: 8, price: "$$$", endsIn: 48,
+        distance: 0.4, walk: 8, price: "$$$",
         coordinate: CLLocationCoordinate2D(latitude: 41.8810, longitude: -87.6462),
         tags: ["Wine", "Cocktails"],
         schedule: [
@@ -152,7 +152,7 @@ let VENUES: [Venue] = [
     Venue(
         id: "v5", name: "Smokehouse 312", neighborhood: "Wicker Park",
         cuisine: "BBQ", vibe: "Lively", rating: 4.5, reviews: 1340,
-        distance: 1.2, walk: 22, price: "$$", endsIn: 71,
+        distance: 1.2, walk: 22, price: "$$",
         coordinate: CLLocationCoordinate2D(latitude: 41.9081, longitude: -87.6779),
         tags: ["Beer", "Cocktails"],
         schedule: [
@@ -183,7 +183,7 @@ let VENUES: [Venue] = [
     Venue(
         id: "v6", name: "Atlas Rooftop", neighborhood: "River North",
         cuisine: "New American", vibe: "Rooftop", rating: 4.4, reviews: 2107,
-        distance: 0.9, walk: 16, price: "$$$", endsIn: 12,
+        distance: 0.9, walk: 16, price: "$$$",
         coordinate: CLLocationCoordinate2D(latitude: 41.8928, longitude: -87.6318),
         tags: ["Cocktails", "Wine"],
         schedule: Dictionary(uniqueKeysWithValues: DayKey.allCases.map { day in
@@ -198,7 +198,7 @@ let VENUES: [Venue] = [
     Venue(
         id: "v7", name: "The Green Room", neighborhood: "Logan Square",
         cuisine: "Cocktail bar", vibe: "Cozy", rating: 4.9, reviews: 486,
-        distance: 1.6, walk: 28, price: "$$", endsIn: 36,
+        distance: 1.6, walk: 28, price: "$$",
         coordinate: CLLocationCoordinate2D(latitude: 41.9215, longitude: -87.7046),
         tags: ["Cocktails", "Beer"],
         schedule: [
@@ -237,7 +237,7 @@ let VENUES: [Venue] = [
     Venue(
         id: "v8", name: "Pier & Pine", neighborhood: "Streeterville",
         cuisine: "Seafood", vibe: "Date night", rating: 4.5, reviews: 773,
-        distance: 1.1, walk: 20, price: "$$$", endsIn: 128,
+        distance: 1.1, walk: 20, price: "$$$",
         coordinate: CLLocationCoordinate2D(latitude: 41.8918, longitude: -87.6208),
         tags: ["Wine", "Cocktails"],
         schedule: [

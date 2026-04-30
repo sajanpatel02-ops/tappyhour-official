@@ -382,14 +382,11 @@ struct VenueDetailView: View {
                         .foregroundStyle(t.muted)
                 }
                 Spacer()
-                if venue.isEndingSoon && selectedDay == TODAY {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("Ends in")
-                            .font(.system(size: 11))
-                            .foregroundStyle(t.accent)
-                        Text("\(venue.endsIn)m")
-                            .font(.system(size: 22, weight: .bold, design: .monospaced))
-                            .foregroundStyle(t.accent)
+                if selectedDay == TODAY {
+                    if venue.isEndingSoon, let m = venue.minutesUntilEnd {
+                        liveBadge(label: "Ends in", minutes: m)
+                    } else if venue.isStartingSoon, let m = venue.minutesUntilStart {
+                        liveBadge(label: "Starts in", minutes: m)
                     }
                 }
             }
@@ -507,6 +504,18 @@ struct VenueDetailView: View {
         let digits = raw.filter { "+0123456789".contains($0) }
         guard !digits.isEmpty else { return nil }
         return URL(string: "tel://\(digits)")
+    }
+
+    /// Trailing badge on the schedule card — "Ends in 23m" / "Starts in 12m".
+    private func liveBadge(label: String, minutes: Int) -> some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(t.accent)
+            Text("\(minutes)m")
+                .font(.system(size: 22, weight: .bold, design: .monospaced))
+                .foregroundStyle(t.accent)
+        }
     }
 
     private var actionButtons: some View {
