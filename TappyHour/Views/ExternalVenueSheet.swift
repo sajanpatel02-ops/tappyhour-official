@@ -91,6 +91,9 @@ struct ExternalVenueSheet: View {
             // form. Gates abuse and matches Apple's expectation that any
             // user-generated content endpoint is tied to an account.
             Button {
+                // Dismiss this sheet first so the login sheet can take over —
+                // SwiftUI won't present a second sheet while this one is up.
+                dismiss()
                 vm.showLogin = true
             } label: {
                 HStack(spacing: 8) {
