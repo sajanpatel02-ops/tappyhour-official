@@ -263,7 +263,29 @@ struct VenueDetailView: View {
     @ViewBuilder
     private var reportOutdatedRow: some View {
         let reported = reportJustSubmitted || vm.hasReported(venue.id)
-        if reported {
+        if !vm.isLoggedIn {
+            // Logged-out users see a sign-in nudge instead of the report
+            // button. Reports must be tied to a real account so we can
+            // enforce per-user rate limits and review reporter history.
+            Button {
+                vm.openVenueId = nil      // close detail
+                vm.showLogin = true       // bring up the login overlay
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.bubble")
+                    Text("Sign in to report outdated deals")
+                }
+                .font(.system(size: 13))
+                .foregroundStyle(t.muted)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(t.cardBorder, lineWidth: 0.5)
+                )
+            }
+            .buttonStyle(.plain)
+        } else if reported {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                 Text("Thanks — we'll review this venue")

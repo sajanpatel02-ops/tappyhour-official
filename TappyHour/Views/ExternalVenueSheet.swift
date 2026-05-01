@@ -86,7 +86,26 @@ struct ExternalVenueSheet: View {
 
     @ViewBuilder
     private var actionButton: some View {
-        if !vm.appConfig.allowSuggestions {
+        if !vm.isLoggedIn {
+            // Logged-out users get a sign-in prompt instead of the request
+            // form. Gates abuse and matches Apple's expectation that any
+            // user-generated content endpoint is tied to an account.
+            Button {
+                vm.showLogin = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.crop.circle")
+                    Text("Sign in to request this bar")
+                }
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(vm.isDark ? Color(hex: "#1a1008") : .white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(vm.theme.accent)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+        } else if !vm.appConfig.allowSuggestions {
             // Gated by remote config — `allow_suggestions = false` in
             // Supabase `app_config` hides the request flow without an
             // app update (e.g. if we're being spammed).
