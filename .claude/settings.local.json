@@ -22,7 +22,12 @@
       "Bash(sips -s format jpeg AppIcon.png --out AppIcon.jpg)",
       "Bash(sips -s format png AppIcon.jpg --out AppIcon.png)",
       "Bash(sips -g hasAlpha -g pixelWidth -g pixelHeight AppIcon.png)",
-      "Bash(perl -i -pe 's/, endsIn: \\\\d+,/,/g' TappyHour/Data/SampleData.swift)"
+      "Bash(perl -i -pe 's/, endsIn: \\\\d+,/,/g' TappyHour/Data/SampleData.swift)",
+      "Bash(git log *)",
+      "Bash(grep -oE \"eyJ[A-Za-z0-9_-]{20,}\")",
+      "Bash(git rm *)",
+      "Bash(command -v supabase)",
+      "Bash(supabase functions *)"
     ]
   }
 }

@@ -193,7 +193,14 @@ struct ContentView: View {
                         }
                         Divider()
                         Button("Delete account", role: .destructive) {
-                            showDeleteConfirm = true
+                            // Defer one runloop tick so the Menu has time to
+                            // fully dismiss before we present the confirmation
+                            // dialog. Without this, SwiftUI races the menu's
+                            // dismissal animation and the dialog flashes
+                            // open-then-closed, requiring a second tap.
+                            DispatchQueue.main.async {
+                                showDeleteConfirm = true
+                            }
                         }
                     } else {
                         Button("Sign in") { vm.showLogin = true }

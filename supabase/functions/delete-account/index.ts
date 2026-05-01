@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
   // ON DELETE CASCADE on the FK to auth.users would handle this automatically;
   // we do it explicitly so a failure surfaces clearly instead of silently leaking.
   const tables: { name: string; column: string }[] = [
-    { name: "venue_suggestions", column: "user_id" },
-    { name: "outdated_reports",  column: "user_id" },
+    { name: "venue_suggestions", column: "suggested_by" },
+    { name: "venue_reports",     column: "reported_by" },
     { name: "venue_managers",    column: "user_id" },
   ];
 
