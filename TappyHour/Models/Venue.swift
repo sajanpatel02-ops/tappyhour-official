@@ -40,16 +40,40 @@ struct DaySchedule {
     var headline: String
     var menu: [HappyHourItem]
 
-    /// Locale-aware display string ("4:00 PM – 7:00 PM" in the US,
-    /// "16:00 – 19:00" elsewhere). Falls back to raw values if either side
-    /// is unparseable.
+    /// Locale-aware display string. Compact on US 12-hour locales:
+    ///   "4 – 6 PM" when start and end share a period
+    ///   "11 AM – 2 PM" when they don't
+    /// On 24h locales: "16 – 18" (or "16:30 – 18:30" with non-zero minutes).
+    /// Falls back to raw values if either side is unparseable.
     var displayWindow: String {
-        let s = DaySchedule.displayTime(startTime)
-        let e = DaySchedule.displayTime(endTime)
-        if s.isEmpty && e.isEmpty { return "" }
-        if s.isEmpty { return e }
-        if e.isEmpty { return s }
-        return "\(s) – \(e)"
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.dateFormat = "HH:mm"
+        guard !startTime.isEmpty, !endTime.isEmpty,
+              let s = parser.date(from: startTime),
+              let e = parser.date(from: endTime) else {
+            return [DaySchedule.displayTime(startTime), DaySchedule.displayTime(endTime)]
+                .filter { !$0.isEmpty }.joined(separator: " – ")
+        }
+
+        let uses12h: Bool = {
+            let template = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: .current) ?? ""
+            return template.contains("a")
+        }()
+
+        if uses12h {
+            let sPeriod = DaySchedule.period(s), ePeriod = DaySchedule.period(e)
+            let sBare = DaySchedule.bare12h(s)
+            let eBare = DaySchedule.bare12h(e)
+            // Same period → drop the start's AM/PM. Different → keep both.
+            if sPeriod == ePeriod {
+                return "\(sBare) – \(eBare) \(ePeriod)"
+            } else {
+                return "\(sBare) \(sPeriod) – \(eBare) \(ePeriod)"
+            }
+        } else {
+            return "\(DaySchedule.bare24h(s)) – \(DaySchedule.bare24h(e))"
+        }
     }
 
     /// "HH:mm" → user-locale time string. Returns the input unchanged if
@@ -62,9 +86,33 @@ struct DaySchedule {
         guard let d = parser.date(from: hhmm) else { return hhmm }
         let out = DateFormatter()
         out.locale = .current
-        out.timeStyle = .short  // respects 12h/24h locale
+        out.timeStyle = .short
         out.dateStyle = .none
         return out.string(from: d)
+    }
+
+    /// "4" or "4:30" — 12h hour, minutes only when non-zero.
+    fileprivate static func bare12h(_ d: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = (Calendar.current.component(.minute, from: d) == 0) ? "h" : "h:mm"
+        return f.string(from: d)
+    }
+
+    /// "AM" or "PM".
+    fileprivate static func period(_ d: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "a"
+        return f.string(from: d)
+    }
+
+    /// 24h: "16" or "16:30".
+    fileprivate static func bare24h(_ d: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = (Calendar.current.component(.minute, from: d) == 0) ? "H" : "H:mm"
+        return f.string(from: d)
     }
 }
 

@@ -27,7 +27,8 @@
       "Bash(grep -oE \"eyJ[A-Za-z0-9_-]{20,}\")",
       "Bash(git rm *)",
       "Bash(command -v supabase)",
-      "Bash(supabase functions *)"
+      "Bash(supabase functions *)",
+      "Bash(xcodebuild -scheme TappyHour -destination 'generic/platform=iOS Simulator' -quiet build)"
     ]
   }
 }

@@ -4,11 +4,13 @@ struct VenueCard: View {
     let venue: Venue
     @Bindable var vm: AppViewModel
 
+    @State private var pulse = false
     private var t: AppTheme { vm.theme }
     private var today: DaySchedule? { venue.deal(for: TODAY) }
-    /// Accent color for ending- or starting-soon highlighting; muted otherwise.
+    /// Accent color whenever the venue is live or about to be — anything
+    /// that should pull the user's eye in a list scan.
     private var timeColor: Color {
-        (venue.isEndingSoon || venue.isStartingSoon) ? t.accent : t.muted
+        (venue.isLiveNow || venue.isStartingSoon) ? t.accent : t.muted
     }
     private var timeWindow: String? {
         guard let d = today else { return nil }
@@ -93,15 +95,35 @@ struct VenueCard: View {
 
     private var metaRow: some View {
         HStack(spacing: 10) {
-            HStack(spacing: 4) {
-                Image(systemName: "clock")
-                    .font(.system(size: 11))
-                    .foregroundStyle(timeColor)
+            HStack(spacing: 5) {
+                // Live venues swap the clock for a pulsing accent dot —
+                // a glance-readable presence indicator. Ending-soon /
+                // starting-soon already win attention via their accent
+                // text + countdown, so the dot is reserved for the
+                // "live but >30m left" case (the gap we couldn't show
+                // before).
+                if venue.isLiveNow && !venue.isEndingSoon {
+                    Circle()
+                        .fill(t.accent)
+                        .frame(width: 7, height: 7)
+                        .opacity(pulse ? 1.0 : 0.45)
+                        .animation(
+                            .easeInOut(duration: 1.2).repeatForever(autoreverses: true),
+                            value: pulse
+                        )
+                        .onAppear { pulse = true }
+                } else {
+                    Image(systemName: "clock")
+                        .font(.system(size: 11))
+                        .foregroundStyle(timeColor)
+                }
                 Group {
                     if venue.isEndingSoon, let m = venue.minutesUntilEnd {
                         Text("Ends in \(m)m").fontWeight(.semibold)
                     } else if venue.isStartingSoon, let m = venue.minutesUntilStart {
                         Text("Starts in \(m)m").fontWeight(.semibold)
+                    } else if venue.isLiveNow, let window = timeWindow {
+                        Text("Now · \(window)").fontWeight(.semibold)
                     } else if let window = timeWindow {
                         Text(window)
                     } else {
