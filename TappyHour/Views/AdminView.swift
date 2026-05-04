@@ -279,7 +279,7 @@ struct AdminView: View {
                 set: { on in
                     withAnimation(.spring(duration: 0.2)) {
                         if on {
-                            schedule[selectedDay] = DaySchedule(hours: "4:00 – 6:00 PM", headline: "Happy hour specials", menu: [])
+                            schedule[selectedDay] = DaySchedule(startTime: "16:00", endTime: "18:00", headline: "Happy hour specials", menu: [])
                         } else {
                             schedule.removeValue(forKey: selectedDay)
                         }
@@ -299,8 +299,13 @@ struct AdminView: View {
         if let deal = dayData {
             VStack(alignment: .leading, spacing: 16) {
                 sectionLabel("Hours & Headline")
-                adminTextField(label: "Hours", text: deal.hours) { newVal in
-                    schedule[selectedDay]?.hours = newVal; hasChanges = true
+                HStack(spacing: 12) {
+                    timePicker(label: "Starts", hhmm: deal.startTime) { newVal in
+                        schedule[selectedDay]?.startTime = newVal; hasChanges = true
+                    }
+                    timePicker(label: "Ends", hhmm: deal.endTime) { newVal in
+                        schedule[selectedDay]?.endTime = newVal; hasChanges = true
+                    }
                 }
                 adminTextField(label: "Headline", text: deal.headline) { newVal in
                     schedule[selectedDay]?.headline = newVal; hasChanges = true
@@ -310,6 +315,36 @@ struct AdminView: View {
             .background(t.card)
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
+    }
+
+    /// Compact wheel popover that round-trips a "HH:mm" string and the
+    /// Date the picker actually wants. Anchored to today's startOfDay so
+    /// only the hour/minute components matter.
+    private func timePicker(label: String, hhmm: String, onChange: @escaping (String) -> Void) -> some View {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.dateFormat = "HH:mm"
+        let parsed = parser.date(from: hhmm).flatMap {
+            cal.date(byAdding: cal.dateComponents([.hour, .minute], from: $0), to: today)
+        } ?? today
+        let binding = Binding<Date>(
+            get: { parsed },
+            set: { newDate in
+                let comps = cal.dateComponents([.hour, .minute], from: newDate)
+                let h = String(format: "%02d", comps.hour ?? 0)
+                let m = String(format: "%02d", comps.minute ?? 0)
+                onChange("\(h):\(m)")
+            }
+        )
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(label).font(.system(size: 12)).foregroundStyle(t.muted)
+            DatePicker("", selection: binding, displayedComponents: .hourAndMinute)
+                .labelsHidden()
+                .tint(t.accent)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func adminTextField(label: String, text: String, onChange: @escaping (String) -> Void) -> some View {

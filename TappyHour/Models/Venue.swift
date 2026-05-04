@@ -32,11 +32,40 @@ struct HappyHourItem: Identifiable {
 }
 
 struct DaySchedule {
-    var hours: String
+    /// 24-hour "HH:mm" — matches Postgres `time` column so we can round-trip
+    /// without parsing. Empty string means "unset" (kept simple instead of
+    /// optional to avoid threading `?` through every call site).
+    var startTime: String
+    var endTime: String
     var headline: String
     var menu: [HappyHourItem]
-    var endTime: String { hours.components(separatedBy: "–").last?.trimmingCharacters(in: .whitespaces) ?? "" }
-    var startTime: String { hours.components(separatedBy: "–").first?.trimmingCharacters(in: .whitespaces) ?? "" }
+
+    /// Locale-aware display string ("4:00 PM – 7:00 PM" in the US,
+    /// "16:00 – 19:00" elsewhere). Falls back to raw values if either side
+    /// is unparseable.
+    var displayWindow: String {
+        let s = DaySchedule.displayTime(startTime)
+        let e = DaySchedule.displayTime(endTime)
+        if s.isEmpty && e.isEmpty { return "" }
+        if s.isEmpty { return e }
+        if e.isEmpty { return s }
+        return "\(s) – \(e)"
+    }
+
+    /// "HH:mm" → user-locale time string. Returns the input unchanged if
+    /// it can't be parsed (e.g. empty, malformed).
+    static func displayTime(_ hhmm: String) -> String {
+        guard !hhmm.isEmpty else { return "" }
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.dateFormat = "HH:mm"
+        guard let d = parser.date(from: hhmm) else { return hhmm }
+        let out = DateFormatter()
+        out.locale = .current
+        out.timeStyle = .short  // respects 12h/24h locale
+        out.dateStyle = .none
+        return out.string(from: d)
+    }
 }
 
 struct Venue: Identifiable {
@@ -118,21 +147,17 @@ struct Venue: Identifiable {
 
     private func dateForTodayTime(_ raw: String?) -> Date? {
         guard let raw, !raw.isEmpty else { return nil }
-        // Normalize "16:00", "4:00 PM", "4 PM", etc.
-        let formats = ["HH:mm", "H:mm", "h:mm a", "h a", "ha", "h:mma"]
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
+        // Internal format is always "HH:mm" since admin uses a picker and
+        // the repo trims Postgres's "HH:mm:ss" down to "HH:mm" on read.
         let fmt = DateFormatter()
         fmt.locale = Locale(identifier: "en_US_POSIX")
         fmt.timeZone = .current
-        for f in formats {
-            fmt.dateFormat = f
-            if let parsed = fmt.date(from: raw.uppercased()) ?? fmt.date(from: raw) {
-                let comps = cal.dateComponents([.hour, .minute], from: parsed)
-                return cal.date(byAdding: comps, to: today)
-            }
-        }
-        return nil
+        fmt.dateFormat = "HH:mm"
+        guard let parsed = fmt.date(from: raw) else { return nil }
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let comps = cal.dateComponents([.hour, .minute], from: parsed)
+        return cal.date(byAdding: comps, to: today)
     }
 
     func deal(for day: DayKey) -> DaySchedule? { schedule[day] }

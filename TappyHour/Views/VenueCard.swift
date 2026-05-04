@@ -12,9 +12,8 @@ struct VenueCard: View {
     }
     private var timeWindow: String? {
         guard let d = today else { return nil }
-        let s = d.startTime, e = d.endTime
-        if !s.isEmpty, !e.isEmpty { return "\(s)–\(e)" }
-        return e.isEmpty ? nil : e
+        let w = d.displayWindow
+        return w.isEmpty ? nil : w
     }
 
     var body: some View {

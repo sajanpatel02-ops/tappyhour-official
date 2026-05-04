@@ -396,7 +396,7 @@ struct VenueDetailView: View {
             // Countdown / hours
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(deal.hours)
+                    Text(deal.displayWindow)
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(t.text)
                     Text(deal.headline)

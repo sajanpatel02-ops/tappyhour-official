@@ -21,8 +21,26 @@ let NEIGHBORHOODS = [
 ]
 let RECENT_SEARCHES = ["West Loop", "Rooftop bars", "Half-off wine"]
 
+/// Sample-data only. Parses "3:00 – 6:00 PM" into HH:mm pieces so the
+/// existing seed entries below don't need to be rewritten. Returns "" for
+/// either side if parsing fails — sample data, not user-facing on prod.
 private func sched(_ hours: String, _ headline: String, _ items: [HappyHourItem]) -> DaySchedule {
-    DaySchedule(hours: hours, headline: headline, menu: items)
+    let parts = hours.components(separatedBy: "–").map { $0.trimmingCharacters(in: .whitespaces) }
+    guard parts.count == 2 else {
+        return DaySchedule(startTime: "", endTime: "", headline: headline, menu: items)
+    }
+    let withPeriod = DateFormatter(); withPeriod.dateFormat = "h:mm a"
+    let outFmt = DateFormatter(); outFmt.dateFormat = "HH:mm"
+    let endHas = parts[1].uppercased().contains("PM") ? "PM" : "AM"
+    let startStr = parts[0].rangeOfCharacter(from: .letters) != nil ? parts[0] : "\(parts[0]) \(endHas)"
+    let endDate = withPeriod.date(from: parts[1])
+    let startDate = withPeriod.date(from: startStr)
+    return DaySchedule(
+        startTime: startDate.map(outFmt.string(from:)) ?? "",
+        endTime:   endDate.map(outFmt.string(from:))   ?? "",
+        headline: headline,
+        menu: items
+    )
 }
 
 let VENUES: [Venue] = [

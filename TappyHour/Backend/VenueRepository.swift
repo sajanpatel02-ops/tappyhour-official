@@ -130,7 +130,9 @@ enum VenueRepository {
                     )
                 }
             dict[day] = DaySchedule(
-                hours: formatHours(start: s.start_time, end: s.end_time),
+                // Postgres `time` comes back as "HH:mm:ss" — drop seconds.
+                startTime: trimSeconds(s.start_time),
+                endTime: trimSeconds(s.end_time),
                 headline: s.headline ?? "",
                 menu: items
             )
@@ -289,11 +291,13 @@ enum VenueRepository {
         struct Args: Encodable { let p_venue_id: String; let p_payload: [DayPayload] }
 
         let payload: [DayPayload] = schedule.compactMap { (dayKey, ds) in
-            guard let (startHHmm, endHHmm) = parseHours(ds.hours) else { return nil }
+            // Skip incomplete rows rather than write garbage. Admin UI's
+            // pickers always populate both fields, but defense-in-depth.
+            guard !ds.startTime.isEmpty, !ds.endTime.isEmpty else { return nil }
             return DayPayload(
                 day: dbDay(dayKey),
-                start: startHHmm,
-                end: endHHmm,
+                start: ds.startTime,
+                end: ds.endTime,
                 headline: ds.headline,
                 items: ds.menu.map { ItemPayload(name: $0.item, normal: $0.normal, deal: $0.deal, label: $0.label) }
             )
@@ -324,40 +328,13 @@ enum VenueRepository {
         }
     }
 
-    /// "3:00 – 6:00 PM" -> ("15:00", "18:00"). Assumes start shares the end's am/pm.
-    static func parseHours(_ s: String) -> (String, String)? {
-        let parts = s.components(separatedBy: "–").map { $0.trimmingCharacters(in: .whitespaces) }
-        guard parts.count == 2 else { return nil }
-        let rawStart = parts[0], rawEnd = parts[1]
-
-        let withPeriod = DateFormatter(); withPeriod.dateFormat = "h:mm a"
-        let noPeriod   = DateFormatter(); noPeriod.dateFormat   = "h:mm"
-        let out        = DateFormatter(); out.dateFormat        = "HH:mm"
-
-        guard let endDate = withPeriod.date(from: rawEnd) else { return nil }
-        let period: String = rawEnd.uppercased().contains("PM") ? "PM" : "AM"
-
-        let startDate: Date? = withPeriod.date(from: rawStart)
-            ?? withPeriod.date(from: "\(rawStart) \(period)")
-            ?? noPeriod.date(from: rawStart).flatMap { _ in
-                withPeriod.date(from: "\(rawStart) \(period)")
-            }
-
-        guard let startDate else { return nil }
-        return (out.string(from: startDate), out.string(from: endDate))
-    }
-
-    /// "15:00:00" + "18:00:00" -> "3:00 – 6:00 PM"
-    private static func formatHours(start: String, end: String) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss"
-        let out = DateFormatter()
-        out.dateFormat = "h:mm"
-        let outAmPm = DateFormatter()
-        outAmPm.dateFormat = "h:mm a"
-        guard let s = f.date(from: start), let e = f.date(from: end) else {
-            return "\(start) – \(end)"
-        }
-        return "\(out.string(from: s)) – \(outAmPm.string(from: e))"
+    /// Postgres `time` columns serialize as "HH:mm:ss". We only ever care
+    /// about minute precision; trimming keeps the in-memory format aligned
+    /// with what the picker writes back.
+    private static func trimSeconds(_ s: String) -> String {
+        // Expected "HH:mm:ss"; if shorter (some drivers omit seconds), pass through.
+        let parts = s.split(separator: ":")
+        guard parts.count >= 2 else { return s }
+        return "\(parts[0]):\(parts[1])"
     }
 }

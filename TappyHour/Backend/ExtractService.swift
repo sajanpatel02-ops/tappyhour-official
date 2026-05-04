@@ -50,8 +50,10 @@ enum ExtractService {
         var out: [DayKey: DaySchedule] = [:]
         for d in result.days ?? [] {
             guard let key = mapDay(d.day) else { continue }
+            // Extractor returns "HH:mm" already; pass straight through.
             out[key] = DaySchedule(
-                hours: formatHours(start: d.start, end: d.end),
+                startTime: d.start,
+                endTime: d.end,
                 headline: trimHeadline(d.headline),
                 menu: d.items.map {
                     HappyHourItem(item: trimItemName($0.name),
@@ -99,14 +101,4 @@ enum ExtractService {
         return String(trimmed.prefix(57)) + "…"
     }
 
-    /// "15:00" + "18:00" → "3:00 – 6:00 PM"
-    private static func formatHours(start: String, end: String) -> String {
-        let f = DateFormatter(); f.dateFormat = "HH:mm"
-        let out = DateFormatter(); out.dateFormat = "h:mm"
-        let outAmPm = DateFormatter(); outAmPm.dateFormat = "h:mm a"
-        guard let s = f.date(from: start), let e = f.date(from: end) else {
-            return "\(start) – \(end)"
-        }
-        return "\(out.string(from: s)) – \(outAmPm.string(from: e))"
-    }
 }
