@@ -41,9 +41,16 @@ enum AnalyticsService {
         let row = Row(device_id: deviceId, user_id: userId)
 
         do {
+            // `returning: .minimal` is critical — PostgREST defaults to
+            // Prefer: return=representation, which reads the row back after
+            // insert. Our RLS allows INSERT but not SELECT, so the read-back
+            // would fail with 403. Minimal means "don't read it back."
             _ = try await Supa.client
                 .from("daily_pings")
-                .upsert(row, onConflict: "device_id,day", ignoreDuplicates: true)
+                .upsert(row,
+                        onConflict: "device_id,day",
+                        returning: .minimal,
+                        ignoreDuplicates: true)
                 .execute()
         } catch {
             // Intentional: analytics is best-effort.
