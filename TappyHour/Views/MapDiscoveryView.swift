@@ -64,7 +64,10 @@ struct MapDiscoveryView: View {
                 UserAnnotation()
             }
             .mapStyle(.standard(elevation: .flat))
-            .onTapGesture { withAnimation { vm.selectPin(nil) } }
+            // Tap empty map area to deselect. The handler guards against
+            // the gesture race: pin taps also bubble up here, so it
+            // ignores the deselect if a pin was just tapped.
+            .onTapGesture { withAnimation { vm.mapBackgroundTapped() } }
             .onMapCameraChange(frequency: .onEnd) { ctx in
                 vm.visibleRegion = ctx.region
             }
@@ -284,62 +287,25 @@ struct VenuePinView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if isSelected {
-                // Selected: short-name pill.
-                Text(venue.shortName)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(fg)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(bg)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .shadow(color: .black.opacity(0.25), radius: 10, y: 2)
-                .scaleEffect(1.08)
+        // Selected pin just scales up and gets a halo — the venue name and
+        // details are already shown in the bottom sheet, so a floating label
+        // would be redundant. Default and live-soon pins keep their styles.
+        let highlighted = venue.isEndingSoon || venue.isStartingSoon
+        let baseSize: CGFloat = highlighted ? 18 : 15
+        let size: CGFloat = isSelected ? 26 : baseSize
+        let ring: CGFloat = isSelected ? 3 : 2
+        let shadowColor: Color = (isSelected || highlighted) ? accent.opacity(0.6) : .black.opacity(0.3)
+        let shadowRadius: CGFloat = isSelected ? 10 : (highlighted ? 6 : 3)
 
-                PinTail(color: bg)
-            } else {
-                // Default: accent dot with a white ring so it pops against
-                // any map tile. Live + ending-soon and starting-soon pins
-                // get a subtle accent glow. Wrapped in a 44pt transparent
-                // hit area so it's actually tappable.
-                let highlighted = venue.isEndingSoon || venue.isStartingSoon
-                Circle()
-                    .fill(accent)
-                    .frame(width: highlighted ? 18 : 15,
-                           height: highlighted ? 18 : 15)
-                    .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                    .shadow(
-                        color: highlighted ? accent.opacity(0.55) : .black.opacity(0.3),
-                        radius: highlighted ? 6 : 3,
-                        y: 1
-                    )
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-        }
-        .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isSelected)
-        .onTapGesture(perform: onTap)
-    }
-}
-
-private struct PinTail: View {
-    let color: Color
-    var body: some View {
-        color.frame(width: 10, height: 6)
-            .clipShape(Triangle())
-            .shadow(color: .black.opacity(0.1), radius: 1, y: 1)
-    }
-}
-
-private struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        Path { p in
-            p.move(to: CGPoint(x: rect.midX, y: rect.maxY))
-            p.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
-            p.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-            p.closeSubpath()
-        }
+        return Circle()
+            .fill(accent)
+            .frame(width: size, height: size)
+            .overlay(Circle().strokeBorder(.white, lineWidth: ring))
+            .shadow(color: shadowColor, radius: shadowRadius, y: 1)
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
+            .onTapGesture(perform: onTap)
     }
 }
 

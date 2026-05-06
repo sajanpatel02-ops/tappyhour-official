@@ -18,6 +18,7 @@
 		26BB5E473C42558BDEF985F8 /* ListFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D91C08C21D9592FF8131741 /* ListFeedView.swift */; };
 		2F7A1F12810C882CA6FC8F13 /* DayFilterChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB85B2E6350939437CA87F99 /* DayFilterChip.swift */; };
 		2FEABCB1BE4D51040626F97A /* SafariView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359900C3506380B14980C2BE /* SafariView.swift */; };
+		37E79A11A7C166CC0DF87502 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E63CD743D88A5A1F91B29818 /* AnalyticsService.swift */; };
 		44A4E6F8FD1621BAB6E1EF3C /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = 6DF572794648BDE083F76B3B /* NukeUI */; };
 		452CCA2AAFDC3413CF1B43E9 /* MapDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF71AFDDB2A8C863B097459 /* MapDiscoveryView.swift */; };
 		4C49F1F6BC793846DB3C41BE /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0ECBE2F6D1C244327BB7CEDD /* MapKit.framework */; };
@@ -74,6 +75,7 @@
 		C7A65B24A2844A831C47BDFC /* TappyHour.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TappyHour.entitlements; sourceTree = "<group>"; };
 		C809A4966B8B7CF690A7BFB6 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		D7DA43B705EDC6CC331F850C /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		E63CD743D88A5A1F91B29818 /* AnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsService.swift; sourceTree = "<group>"; };
 		EB85B2E6350939437CA87F99 /* DayFilterChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayFilterChip.swift; sourceTree = "<group>"; };
 		EF0359FAAF7648B714CE04C6 /* AppConfigService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -194,6 +196,7 @@
 		DAE65EEAEBC205EEF43A7925 /* Backend */ = {
 			isa = PBXGroup;
 			children = (
+				E63CD743D88A5A1F91B29818 /* AnalyticsService.swift */,
 				EF0359FAAF7648B714CE04C6 /* AppConfigService.swift */,
 				1439799852698520056EE7A2 /* AuthService.swift */,
 				67C410EC0E1F603783418DBF /* ExtractService.swift */,
@@ -285,6 +288,7 @@
 			files = (
 				9E56AEDD29FB1B38E1E10445 /* AddVenueSheet.swift in Sources */,
 				BB82578130E0BC6321C66888 /* AdminView.swift in Sources */,
+				37E79A11A7C166CC0DF87502 /* AnalyticsService.swift in Sources */,
 				A4B7CA77CE95F310703BA3D4 /* AppConfigService.swift in Sources */,
 				B4109E16553F7B9BC290A59E /* AppTheme.swift in Sources */,
 				C0019064F7B8295F99001540 /* AppViewModel.swift in Sources */,
@@ -374,7 +378,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -393,7 +397,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -465,7 +469,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -478,7 +482,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tappyhour.app;

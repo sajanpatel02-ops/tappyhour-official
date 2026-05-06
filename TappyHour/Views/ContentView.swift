@@ -57,6 +57,9 @@ struct ContentView: View {
         .preferredColorScheme(vm.isDark ? .dark : .light)
         .task {
             LocationManager.shared.requestAndStart()
+            // Fire-and-forget DAU ping. Runs in the background, never
+            // awaited — analytics shouldn't slow down launch.
+            AnalyticsService.recordAppOpen()
             // Refresh kill switch / feature flags first — if killed, we
             // skip the rest so we don't hit other endpoints under load.
             await vm.refreshAppConfig()

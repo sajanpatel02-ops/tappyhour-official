@@ -52,6 +52,7 @@ struct ListFeedView: View {
 
     private var listHeaderSuffix: String {
         switch vm.listDayFilter {
+        case .liveNow:    "spots with happy hour right now"
         case .today:      "spots with happy hour today"
         case .all:        "spots with happy hour"
         case .day(let d): "spots with happy hour on \(d.displayName)"

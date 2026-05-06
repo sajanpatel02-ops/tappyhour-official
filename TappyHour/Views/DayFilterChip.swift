@@ -9,18 +9,12 @@ struct DayFilterChip: View {
 
     var body: some View {
         Menu {
-            Button { vm.listDayFilter = .today } label: {
-                Label("Today", systemImage: vm.listDayFilter == .today ? "checkmark" : "")
-            }
-            Button { vm.listDayFilter = .all } label: {
-                Label("All days", systemImage: vm.listDayFilter == .all ? "checkmark" : "")
-            }
+            menuItem("Live now", filter: .liveNow)
+            menuItem("Today",    filter: .today)
+            menuItem("All days", filter: .all)
             Divider()
             ForEach(DayKey.allCases) { d in
-                Button { vm.listDayFilter = .day(d) } label: {
-                    Label(d.displayName,
-                          systemImage: vm.listDayFilter == .day(d) ? "checkmark" : "")
-                }
+                menuItem(d.displayName, filter: .day(d))
             }
         } label: {
             HStack(spacing: 6) {
@@ -41,8 +35,23 @@ struct DayFilterChip: View {
         }
     }
 
+    /// Renders a menu row with a checkmark only when selected. Avoids the
+    /// "No symbol named '' found" runtime warning that comes from passing
+    /// an empty `systemImage` to `Label`.
+    @ViewBuilder
+    private func menuItem(_ title: String, filter: ListDayFilter) -> some View {
+        Button { vm.listDayFilter = filter } label: {
+            if vm.listDayFilter == filter {
+                Label(title, systemImage: "checkmark")
+            } else {
+                Text(title)
+            }
+        }
+    }
+
     private var label: String {
         switch vm.listDayFilter {
+        case .liveNow:    "Live now"
         case .today:      "Today"
         case .all:        "All days"
         case .day(let d): d.displayName

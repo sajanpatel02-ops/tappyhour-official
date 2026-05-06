@@ -7,14 +7,16 @@ enum ViewMode { case map, list, feed }
 enum SheetSize { case peek, half, full }
 
 enum ListDayFilter: Hashable {
+    case liveNow
     case today
     case all
     case day(DayKey)
 
     var shortLabel: String {
         switch self {
-        case .today: "Today"
-        case .all:   "All"
+        case .liveNow: "Live now"
+        case .today:   "Today"
+        case .all:     "All"
         case .day(let d): d.shortName
         }
     }
@@ -108,11 +110,13 @@ class AppViewModel {
     }
 
     /// Returns true if a venue matches the current list day filter.
+    ///   - .liveNow: happy hour is currently active
     ///   - .today: has a schedule for today's weekday
     ///   - .all:   has any happy hour at all
     ///   - .day(d): has a schedule for that specific weekday
     func matchesDayFilter(_ v: Venue) -> Bool {
         switch listDayFilter {
+        case .liveNow:    return v.isLiveNow
         case .today:      return v.schedule[TODAY] != nil
         case .all:        return !v.schedule.isEmpty
         case .day(let d): return v.schedule[d] != nil
@@ -137,9 +141,14 @@ class AppViewModel {
             ?? visibleRegion?.center
         guard let anchor else { return filtered }
         let ref = CLLocation(latitude: anchor.latitude, longitude: anchor.longitude)
-        return filtered.sorted {
-            let a = CLLocation(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
-            let b = CLLocation(latitude: $1.coordinate.latitude, longitude: $1.coordinate.longitude)
+        // Two-tier sort: live-now venues bubble to the top (most useful when
+        // someone opens the app to find a drink right now), then distance
+        // within each tier. Tie-break by minutes-until-end so the venue with
+        // the most time left appears first among live spots.
+        return filtered.sorted { lhs, rhs in
+            if lhs.isLiveNow != rhs.isLiveNow { return lhs.isLiveNow }
+            let a = CLLocation(latitude: lhs.coordinate.latitude, longitude: lhs.coordinate.longitude)
+            let b = CLLocation(latitude: rhs.coordinate.latitude, longitude: rhs.coordinate.longitude)
             return ref.distance(from: a) < ref.distance(from: b)
         }
     }
@@ -310,9 +319,27 @@ class AppViewModel {
         return v
     }
 
+    /// Timestamp of the last pin tap. The Map's empty-area tap gesture
+    /// also fires whenever a pin is tapped (annotation taps don't consume
+    /// the parent gesture), so we use this to suppress the deselect for
+    /// a short window after a pin was just tapped.
+    var lastPinTapAt: Date? = nil
+
     func selectPin(_ id: String?) {
         selectedVenueId = id
-        if id != nil { sheetSize = .peek }
+        if id != nil {
+            sheetSize = .peek
+            lastPinTapAt = Date()
+        }
+    }
+
+    /// Called from Map's tap-empty-area gesture. Skips if a pin tap just
+    /// fired (within 300ms), otherwise clears the selection.
+    func mapBackgroundTapped() {
+        if let last = lastPinTapAt, Date().timeIntervalSince(last) < 0.3 {
+            return
+        }
+        selectedVenueId = nil
     }
 
     func openVenue(_ id: String) { openVenueId = id }
