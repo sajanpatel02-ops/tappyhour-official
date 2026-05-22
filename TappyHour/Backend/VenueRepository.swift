@@ -93,12 +93,20 @@ enum VenueRepository {
         async let schedulesTask: [ScheduleRow] = Supa.client
             .from("venue_schedules")
             .select()
+            .range(from: 0, to: 99_999)
             .execute()
             .value
 
+        // PostgREST caps responses at 1000 rows by default. Once the
+        // global menu_items count crosses that line, the most recently
+        // published items disappear from the response — and the venue
+        // detail view renders with no menu. Bumping the range up front
+        // is the simplest scaling fix; we can switch to scoped fetching
+        // (where schedule_id in ...) once we're regularly past 10K rows.
         async let menuTask: [MenuRow] = Supa.client
             .from("menu_items")
             .select()
+            .range(from: 0, to: 99_999)
             .execute()
             .value
 
