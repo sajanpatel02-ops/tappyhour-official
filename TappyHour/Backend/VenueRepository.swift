@@ -90,25 +90,12 @@ enum VenueRepository {
             .execute()
             .value
 
-        async let schedulesTask: [ScheduleRow] = Supa.client
-            .from("venue_schedules")
-            .select()
-            .range(from: 0, to: 99_999)
-            .execute()
-            .value
-
-        // PostgREST caps responses at 1000 rows by default. Once the
-        // global menu_items count crosses that line, the most recently
-        // published items disappear from the response — and the venue
-        // detail view renders with no menu. Bumping the range up front
-        // is the simplest scaling fix; we can switch to scoped fetching
-        // (where schedule_id in ...) once we're regularly past 10K rows.
-        async let menuTask: [MenuRow] = Supa.client
-            .from("menu_items")
-            .select()
-            .range(from: 0, to: 99_999)
-            .execute()
-            .value
+        // Supabase enforces a server-side `db-max-rows` cap (1000 by default)
+        // that overrides any client-side `.limit()`. We can't fetch the full
+        // schedule/menu tables in one shot, so we paginate with explicit
+        // ranges and accumulate until a partial page comes back.
+        async let schedulesTask: [ScheduleRow] = fetchAllPaginated(table: "venue_schedules")
+        async let menuTask: [MenuRow] = fetchAllPaginated(table: "menu_items")
 
         let (rows, schedules, menu) = try await (venuesTask, schedulesTask, menuTask)
         let menuByScheduleId = Dictionary(grouping: menu, by: \.schedule_id)
@@ -363,6 +350,29 @@ enum VenueRepository {
         _ = try await Supa.client
             .rpc("publish_schedule", params: Args(p_venue_id: venueId, p_payload: payload))
             .execute()
+    }
+
+    /// Generic paginator that bypasses Supabase's 1000-row response cap.
+    /// Fetches the table in chunks via PostgREST `Range` headers, stopping
+    /// when a chunk comes back smaller than the page size (meaning we've
+    /// hit the end). Hard ceiling of 50K rows / 50 pages for safety.
+    private static func fetchAllPaginated<T: Decodable>(table: String,
+                                                        pageSize: Int = 1000) async throws -> [T] {
+        var all: [T] = []
+        var offset = 0
+        let maxPages = 50
+        for _ in 0..<maxPages {
+            let page: [T] = try await Supa.client
+                .from(table)
+                .select()
+                .range(from: offset, to: offset + pageSize - 1)
+                .execute()
+                .value
+            all.append(contentsOf: page)
+            if page.count < pageSize { break }  // last page
+            offset += pageSize
+        }
+        return all
     }
 
     // MARK: helpers
