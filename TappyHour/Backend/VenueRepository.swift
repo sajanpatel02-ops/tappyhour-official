@@ -276,6 +276,55 @@ enum VenueRepository {
             .value
     }
 
+    // MARK: - User favorites
+
+    struct UserFavoriteRow: Decodable {
+        let venue_id: String
+    }
+
+    /// All venue IDs the current user has favorited. RLS auto-scopes to
+    /// the signed-in user; anon callers get an empty array via RLS-block.
+    static func fetchMyFavorites() async throws -> [String] {
+        let rows: [UserFavoriteRow] = try await Supa.client
+            .from("user_favorites")
+            .select("venue_id")
+            .execute()
+            .value
+        return rows.map(\.venue_id)
+    }
+
+    /// Add `venueId` to the current user's favorites. Idempotent — repeat
+    /// inserts fail with a unique-key violation that we swallow.
+    static func addFavorite(venueId: String) async throws {
+        struct Row: Encodable {
+            let user_id: String
+            let venue_id: String
+        }
+        let session = try await Supa.client.auth.session
+        let uid = session.user.id.uuidString.lowercased()
+        do {
+            _ = try await Supa.client
+                .from("user_favorites")
+                .insert(Row(user_id: uid, venue_id: venueId), returning: .minimal)
+                .execute()
+        } catch {
+            // Duplicate-key on retry isn't an error from the user's POV.
+            // Other errors bubble up — let the VM decide how to surface them.
+            let msg = "\(error)".lowercased()
+            if msg.contains("duplicate") || msg.contains("23505") { return }
+            throw error
+        }
+    }
+
+    /// Remove `venueId` from the current user's favorites.
+    static func removeFavorite(venueId: String) async throws {
+        _ = try await Supa.client
+            .from("user_favorites")
+            .delete()
+            .eq("venue_id", value: venueId)
+            .execute()
+    }
+
     /// Publish (replace) the entire schedule for a venue.
     static func publish(venueId: String, schedule: [DayKey: DaySchedule]) async throws {
         struct ItemPayload: Encodable {

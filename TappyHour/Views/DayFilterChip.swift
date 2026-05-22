@@ -9,9 +9,9 @@ struct DayFilterChip: View {
 
     var body: some View {
         Menu {
-            menuItem("Live now", filter: .liveNow)
-            menuItem("Today",    filter: .today)
-            menuItem("All days", filter: .all)
+            menuItem("Live now",  filter: .liveNow)
+            menuItem("Today",     filter: .today)
+            menuItem("All days",  filter: .all)
             Divider()
             ForEach(DayKey.allCases) { d in
                 menuItem(d.displayName, filter: .day(d))

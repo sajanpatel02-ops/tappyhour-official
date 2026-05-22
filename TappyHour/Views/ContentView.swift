@@ -68,6 +68,7 @@ struct ContentView: View {
             await vm.loadVenues()
             await vm.loadMySuggestions()
             await vm.loadMyReports()
+            await vm.loadMyFavorites()
         }
         .sheet(isPresented: $vm.isAddingVenue) {
             AddVenueSheet(vm: vm)

@@ -46,6 +46,7 @@ struct VenueDetailView: View {
                 }
                 Spacer()
                 HStack(spacing: 8) {
+                    favoriteButton
                     // Admin/manager shortcut: edit this specific bar's schedule.
                     // Avoids the Manager-chip-only-opens-first-bar footgun.
                     if vm.isAdmin || vm.managedVenueIds.contains(venue.id) {
@@ -98,6 +99,29 @@ struct VenueDetailView: View {
         .sheet(item: $presentedURL) { item in
             SafariView(url: item.url)
                 .ignoresSafeArea()
+        }
+    }
+
+    // MARK: - Favorite button (toolbar overlay)
+    private var favoriteButton: some View {
+        let isFav = vm.isFavorited(venue.id)
+        return Button {
+            let gen = UIImpactFeedbackGenerator(style: .light)
+            gen.impactOccurred()
+            Task { await vm.toggleFavorite(venue.id) }
+        } label: {
+            MartiniGlassIcon(
+                size: 20,
+                lineWidth: 1.4,
+                filled: isFav,
+                color: isFav ? t.accent : t.text
+            )
+            .frame(width: 40, height: 40)
+            .background(t.card.opacity(0.9))
+            .clipShape(Circle())
+            .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+            .scaleEffect(isFav ? 1.05 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.55), value: isFav)
         }
     }
 

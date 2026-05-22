@@ -7,8 +7,13 @@ struct ListFeedView: View {
     private var venues: [Venue] {
         if vm.viewMode == .feed {
             // Feed mode: "ending soon" — live-now venues by minutes remaining,
-            // closed/upcoming sink to the bottom (Int.max sort key).
-            return vm.filteredVenues.sorted { $0.endsInSortKey < $1.endsInSortKey }
+            // closed/upcoming sink to the bottom (Int.max sort key). Day filter
+            // is intentionally NOT applied (feed is always "right now") but
+            // favorites IS, so users can ask "my favorites ending soon."
+            let base = vm.showFavoritesOnly
+                ? vm.filteredVenues.filter { vm.favoriteVenueIds.contains($0.id) }
+                : vm.filteredVenues
+            return base.sorted { $0.endsInSortKey < $1.endsInSortKey }
         }
         // List mode mirrors the map: only venues in the current map region,
         // sorted nearest-first from the user's location.
@@ -21,6 +26,7 @@ struct ListFeedView: View {
                 LazyVStack(spacing: 10) {
                     if vm.viewMode == .feed {
                         feedHeader
+                        feedFiltersRow
                     } else {
                         listHeader
                         if vm.viewMode == .list { dayFilterRow }
@@ -42,21 +48,41 @@ struct ListFeedView: View {
     }
 
     private var dayFilterRow: some View {
-        HStack {
+        HStack(spacing: 8) {
             DayFilterChip(vm: vm)
+            FavoritesFilterChip(vm: vm)
             Spacer()
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 4)
     }
 
-    private var listHeaderSuffix: String {
-        switch vm.listDayFilter {
-        case .liveNow:    "spots with happy hour right now"
-        case .today:      "spots with happy hour today"
-        case .all:        "spots with happy hour"
-        case .day(let d): "spots with happy hour on \(d.displayName)"
+    /// Feed mode only shows the favorites chip (day filter doesn't apply —
+    /// feed is always "right now"). Hidden when the user is signed out so
+    /// the row doesn't look interactive without a reason.
+    @ViewBuilder
+    private var feedFiltersRow: some View {
+        if vm.isLoggedIn || vm.showFavoritesOnly {
+            HStack(spacing: 8) {
+                FavoritesFilterChip(vm: vm)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 4)
         }
+    }
+
+    private var listHeaderSuffix: String {
+        // Compose with the favorites flag — if active, prepend "favorite "
+        // so the header reads "X favorite spots with happy hour today" etc.
+        let base: String
+        switch vm.listDayFilter {
+        case .liveNow:    base = "spots with happy hour right now"
+        case .today:      base = "spots with happy hour today"
+        case .all:        base = "spots with happy hour"
+        case .day(let d): base = "spots with happy hour on \(d.displayName)"
+        }
+        return vm.showFavoritesOnly ? "favorite \(base)" : base
     }
 
     private var listHeader: some View {

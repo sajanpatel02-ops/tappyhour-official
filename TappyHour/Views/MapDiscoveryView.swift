@@ -77,8 +77,10 @@ struct MapDiscoveryView: View {
              // switch which day the pins reflect without leaving the map.
             if vm.sheetSize != .full {
                 VStack {
-                    HStack {
+                    HStack(spacing: 8) {
                         DayFilterChip(vm: vm)
+                            .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+                        FavoritesFilterChip(vm: vm)
                             .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
                         Spacer()
                     }
@@ -228,6 +230,7 @@ private struct BottomSheetContent: View {
 
                     HStack(spacing: 8) {
                         DayFilterChip(vm: vm)
+                        FavoritesFilterChip(vm: vm)
                         if vm.isAdmin {
                             Button { vm.isAddingVenue = true } label: {
                                 chipLabel(icon: "plus", text: "Add bar",
@@ -290,17 +293,21 @@ struct VenuePinView: View {
         // Selected pin just scales up and gets a halo — the venue name and
         // details are already shown in the bottom sheet, so a floating label
         // would be redundant. Default and live-soon pins keep their styles.
+        // Favorited pins swap the white ring for an accent ring so they
+        // stand out at a glance without adding a new pin element.
         let highlighted = venue.isEndingSoon || venue.isStartingSoon
+        let isFav = vm.isFavorited(venue.id)
         let baseSize: CGFloat = highlighted ? 18 : 15
         let size: CGFloat = isSelected ? 26 : baseSize
         let ring: CGFloat = isSelected ? 3 : 2
-        let shadowColor: Color = (isSelected || highlighted) ? accent.opacity(0.6) : .black.opacity(0.3)
-        let shadowRadius: CGFloat = isSelected ? 10 : (highlighted ? 6 : 3)
+        let ringColor: Color = isFav ? accent.opacity(0.95) : .white
+        let shadowColor: Color = (isSelected || highlighted || isFav) ? accent.opacity(0.6) : .black.opacity(0.3)
+        let shadowRadius: CGFloat = isSelected ? 10 : (highlighted || isFav ? 6 : 3)
 
         return Circle()
-            .fill(accent)
+            .fill(isFav ? .white : accent)
             .frame(width: size, height: size)
-            .overlay(Circle().strokeBorder(.white, lineWidth: ring))
+            .overlay(Circle().strokeBorder(ringColor, lineWidth: ring))
             .shadow(color: shadowColor, radius: shadowRadius, y: 1)
             .frame(width: 44, height: 44)
             .contentShape(Rectangle())

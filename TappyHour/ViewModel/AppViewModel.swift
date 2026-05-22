@@ -14,9 +14,9 @@ enum ListDayFilter: Hashable {
 
     var shortLabel: String {
         switch self {
-        case .liveNow: "Live now"
-        case .today:   "Today"
-        case .all:     "All"
+        case .liveNow:   "Live now"
+        case .today:     "Today"
+        case .all:       "All"
         case .day(let d): d.shortName
         }
     }
@@ -67,6 +67,11 @@ class AppViewModel {
     /// day filter — every bar with any happy hour at all).
     var listDayFilter: ListDayFilter = .today
 
+    /// Second-axis filter: when true, only signed-in user's favorites are
+    /// shown — combined with the day filter (logical AND). Independent of
+    /// `listDayFilter` so users can ask things like "my favorites on Friday."
+    var showFavoritesOnly: Bool = false
+
     var adminVenueId: String? = nil
     var isAddingVenue: Bool = false
     var venueOverrides: [String: [DayKey: DaySchedule]] = [:]
@@ -92,6 +97,15 @@ class AppViewModel {
     /// "Reported" pill on VenueDetailView so they can't spam-tap it.
     var myReportedVenueIds: Set<String> = []
 
+    /// Venue IDs the user has favorited. Drives the filled glass icon
+    /// on cards/detail, the favorites filter, and the map pin treatment.
+    var favoriteVenueIds: Set<String> = []
+
+    /// When the user taps a favorite while signed out, we stash the
+    /// venue ID here. After they sign in, `reloadAfterAuthChange()`
+    /// auto-saves it so the intent isn't lost across the sign-in flow.
+    var pendingFavoriteVenueId: String? = nil
+
     var theme: AppTheme { AppTheme(isDark: isDark, accent: accent) }
 
     /// The map's current camera region. Updated by MapDiscoveryView as
@@ -109,17 +123,92 @@ class AppViewModel {
         }
     }
 
-    /// Returns true if a venue matches the current list day filter.
-    ///   - .liveNow: happy hour is currently active
-    ///   - .today: has a schedule for today's weekday
-    ///   - .all:   has any happy hour at all
-    ///   - .day(d): has a schedule for that specific weekday
+    /// Returns true if a venue passes BOTH active filters (day filter AND
+    /// favorites-only, if it's enabled). Single entry point so list and
+    /// map views always agree.
+    ///   - .liveNow:   happy hour is currently active
+    ///   - .today:     has a schedule for today's weekday
+    ///   - .all:       has any happy hour at all
+    ///   - .day(d):    has a schedule for that specific weekday
     func matchesDayFilter(_ v: Venue) -> Bool {
+        if showFavoritesOnly && !favoriteVenueIds.contains(v.id) {
+            return false
+        }
         switch listDayFilter {
         case .liveNow:    return v.isLiveNow
         case .today:      return v.schedule[TODAY] != nil
         case .all:        return !v.schedule.isEmpty
         case .day(let d): return v.schedule[d] != nil
+        }
+    }
+
+    /// User-facing toggle for the favorites chip. Prompts sign-in when
+    /// the user isn't logged in (and remembers the intent so the toggle
+    /// flips on automatically after a successful sign-in).
+    @MainActor
+    func toggleFavoritesOnly() {
+        guard isLoggedIn else {
+            pendingFavoritesOnlyToggle = true
+            showLogin = true
+            return
+        }
+        showFavoritesOnly.toggle()
+    }
+
+    /// Set after a signed-out user taps the chip. `reloadAfterAuthChange`
+    /// flips the toggle on if true so the intent survives the auth flow.
+    var pendingFavoritesOnlyToggle: Bool = false
+
+    // MARK: - Favorites
+
+    func isFavorited(_ venueId: String) -> Bool {
+        favoriteVenueIds.contains(venueId)
+    }
+
+    /// Toggle a venue's favorite state. If the user isn't signed in,
+    /// stashes the intent and opens the sign-in sheet — `reloadAfterAuthChange`
+    /// completes the save on successful sign-in.
+    @MainActor
+    func toggleFavorite(_ venueId: String) async {
+        guard isLoggedIn else {
+            pendingFavoriteVenueId = venueId
+            showLogin = true
+            return
+        }
+        let wasFav = favoriteVenueIds.contains(venueId)
+        // Optimistic flip so the UI snaps; revert on failure.
+        if wasFav {
+            favoriteVenueIds.remove(venueId)
+        } else {
+            favoriteVenueIds.insert(venueId)
+        }
+        do {
+            if wasFav {
+                try await VenueRepository.removeFavorite(venueId: venueId)
+            } else {
+                try await VenueRepository.addFavorite(venueId: venueId)
+            }
+        } catch {
+            // Roll back the optimistic update on error.
+            if wasFav {
+                favoriteVenueIds.insert(venueId)
+            } else {
+                favoriteVenueIds.remove(venueId)
+            }
+        }
+    }
+
+    @MainActor
+    func loadMyFavorites() async {
+        guard isLoggedIn else {
+            favoriteVenueIds = []
+            return
+        }
+        do {
+            let ids = try await VenueRepository.fetchMyFavorites()
+            favoriteVenueIds = Set(ids)
+        } catch {
+            // Non-fatal; favorites just stay empty until next attempt.
         }
     }
 
@@ -141,12 +230,17 @@ class AppViewModel {
             ?? visibleRegion?.center
         guard let anchor else { return filtered }
         let ref = CLLocation(latitude: anchor.latitude, longitude: anchor.longitude)
-        // Two-tier sort: live-now venues bubble to the top (most useful when
-        // someone opens the app to find a drink right now), then distance
-        // within each tier. Tie-break by minutes-until-end so the venue with
-        // the most time left appears first among live spots.
+        // Three-tier sort:
+        //   1. Favorited venues that are also live now (top of mind, on now)
+        //   2. Other live-now venues
+        //   3. Everything else (closed, etc.)
+        // Distance is the tie-breaker within each tier.
         return filtered.sorted { lhs, rhs in
-            if lhs.isLiveNow != rhs.isLiveNow { return lhs.isLiveNow }
+            let lFav = favoriteVenueIds.contains(lhs.id)
+            let rFav = favoriteVenueIds.contains(rhs.id)
+            let lTier = (lFav && lhs.isLiveNow) ? 0 : (lhs.isLiveNow ? 1 : (lFav ? 2 : 3))
+            let rTier = (rFav && rhs.isLiveNow) ? 0 : (rhs.isLiveNow ? 1 : (rFav ? 2 : 3))
+            if lTier != rTier { return lTier < rTier }
             let a = CLLocation(latitude: lhs.coordinate.latitude, longitude: lhs.coordinate.longitude)
             let b = CLLocation(latitude: rhs.coordinate.latitude, longitude: rhs.coordinate.longitude)
             return ref.distance(from: a) < ref.distance(from: b)
@@ -211,6 +305,19 @@ class AppViewModel {
         await loadVenues()
         await loadMySuggestions()
         await loadMyReports()
+        await loadMyFavorites()
+        // If the user tapped a glass icon while signed out, complete the
+        // save now that they're authenticated.
+        if let pending = pendingFavoriteVenueId {
+            pendingFavoriteVenueId = nil
+            await toggleFavorite(pending)
+        }
+        // If the user tapped the "favorites only" chip while signed out,
+        // flip it on now that they're authenticated.
+        if pendingFavoritesOnlyToggle {
+            pendingFavoritesOnlyToggle = false
+            showFavoritesOnly = true
+        }
     }
 
     @MainActor
@@ -219,6 +326,10 @@ class AppViewModel {
         isLoggedIn = false; showLogin = true
         isAdmin = false; managedVenueIds = []
         mySuggestions = []; myReportedVenueIds = []
+        favoriteVenueIds = []
+        // Drop favorites-only filter on sign-out so the user doesn't stare
+        // at an empty list.
+        showFavoritesOnly = false
         query = ""
     }
 
@@ -231,6 +342,8 @@ class AppViewModel {
             isLoggedIn = false; showLogin = true
             isAdmin = false; managedVenueIds = []
             mySuggestions = []; myReportedVenueIds = []
+            favoriteVenueIds = []
+            showFavoritesOnly = false
             query = ""
             return true
         } catch {

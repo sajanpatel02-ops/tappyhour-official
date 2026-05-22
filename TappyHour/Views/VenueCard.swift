@@ -90,6 +90,29 @@ struct VenueCard: View {
                 .foregroundStyle(t.muted)
             }
             Spacer(minLength: 4)
+            favoriteButton
+        }
+    }
+
+    /// Toggles favorite state without opening the venue. Uses a tap gesture
+    /// (not a Button) because the whole card is wrapped in a Button — nested
+    /// Buttons inside SwiftUI Buttons swallow each other's taps.
+    private var favoriteButton: some View {
+        let isFav = vm.isFavorited(venue.id)
+        return MartiniGlassIcon(
+            size: 22,
+            lineWidth: 1.4,
+            filled: isFav,
+            color: isFav ? t.accent : t.muted
+        )
+        .frame(width: 32, height: 32)
+        .contentShape(Rectangle())
+        .scaleEffect(isFav ? 1.0 : 0.95)
+        .animation(.spring(response: 0.3, dampingFraction: 0.55), value: isFav)
+        .onTapGesture {
+            let gen = UIImpactFeedbackGenerator(style: .light)
+            gen.impactOccurred()
+            Task { await vm.toggleFavorite(venue.id) }
         }
     }
 
