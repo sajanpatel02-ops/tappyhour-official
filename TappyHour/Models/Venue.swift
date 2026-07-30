@@ -46,22 +46,14 @@ struct DaySchedule {
     /// On 24h locales: "16 – 18" (or "16:30 – 18:30" with non-zero minutes).
     /// Falls back to raw values if either side is unparseable.
     var displayWindow: String {
-        let parser = DateFormatter()
-        parser.locale = Locale(identifier: "en_US_POSIX")
-        parser.dateFormat = "HH:mm"
         guard !startTime.isEmpty, !endTime.isEmpty,
-              let s = parser.date(from: startTime),
-              let e = parser.date(from: endTime) else {
+              let s = DaySchedule.hhmmParser.date(from: startTime),
+              let e = DaySchedule.hhmmParser.date(from: endTime) else {
             return [DaySchedule.displayTime(startTime), DaySchedule.displayTime(endTime)]
                 .filter { !$0.isEmpty }.joined(separator: " – ")
         }
 
-        let uses12h: Bool = {
-            let template = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: .current) ?? ""
-            return template.contains("a")
-        }()
-
-        if uses12h {
+        if DaySchedule.uses12h {
             let sPeriod = DaySchedule.period(s), ePeriod = DaySchedule.period(e)
             let sBare = DaySchedule.bare12h(s)
             let eBare = DaySchedule.bare12h(e)
@@ -76,43 +68,73 @@ struct DaySchedule {
         }
     }
 
+    // MARK: - Cached formatters
+    //
+    // These are shared rather than allocated per call: every venue card and
+    // detail row formats a time window, and DateFormatter construction is
+    // orders of magnitude more expensive than the formatting itself. They're
+    // configured once and never mutated, which is safe to share.
+
+    fileprivate static let hhmmParser: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        f.dateFormat = "HH:mm"
+        return f
+    }()
+
+    private static let localeTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = .current
+        f.timeStyle = .short
+        f.dateStyle = .none
+        return f
+    }()
+
+    private static func fixedFormatter(_ format: String) -> DateFormatter {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = format
+        return f
+    }
+
+    private static let hourOnly12h  = fixedFormatter("h")
+    private static let hourMinute12h = fixedFormatter("h:mm")
+    private static let periodOnly    = fixedFormatter("a")
+    private static let hourOnly24h   = fixedFormatter("H")
+    private static let hourMinute24h = fixedFormatter("H:mm")
+
+    /// Whether the user's locale renders times in 12-hour form.
+    fileprivate static let uses12h: Bool = {
+        let template = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: .current) ?? ""
+        return template.contains("a")
+    }()
+
     /// "HH:mm" → user-locale time string. Returns the input unchanged if
     /// it can't be parsed (e.g. empty, malformed).
     static func displayTime(_ hhmm: String) -> String {
         guard !hhmm.isEmpty else { return "" }
-        let parser = DateFormatter()
-        parser.locale = Locale(identifier: "en_US_POSIX")
-        parser.dateFormat = "HH:mm"
-        guard let d = parser.date(from: hhmm) else { return hhmm }
-        let out = DateFormatter()
-        out.locale = .current
-        out.timeStyle = .short
-        out.dateStyle = .none
-        return out.string(from: d)
+        guard let d = hhmmParser.date(from: hhmm) else { return hhmm }
+        return localeTimeFormatter.string(from: d)
+    }
+
+    private static func hasZeroMinutes(_ d: Date) -> Bool {
+        Calendar.current.component(.minute, from: d) == 0
     }
 
     /// "4" or "4:30" — 12h hour, minutes only when non-zero.
     fileprivate static func bare12h(_ d: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = (Calendar.current.component(.minute, from: d) == 0) ? "h" : "h:mm"
-        return f.string(from: d)
+        (hasZeroMinutes(d) ? hourOnly12h : hourMinute12h).string(from: d)
     }
 
     /// "AM" or "PM".
     fileprivate static func period(_ d: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "a"
-        return f.string(from: d)
+        periodOnly.string(from: d)
     }
 
     /// 24h: "16" or "16:30".
     fileprivate static func bare24h(_ d: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = (Calendar.current.component(.minute, from: d) == 0) ? "H" : "H:mm"
-        return f.string(from: d)
+        (hasZeroMinutes(d) ? hourOnly24h : hourMinute24h).string(from: d)
     }
 }
 
@@ -142,23 +164,23 @@ struct Venue: Identifiable {
     /// hour today / it's already over / we couldn't parse the time.
     /// Negative values are clamped to nil (already ended).
     var minutesUntilEnd: Int? {
-        guard let end = todayEndDate() else { return nil }
-        let mins = Int(end.timeIntervalSince(Date()) / 60)
+        guard let end = todayEndMinutes else { return nil }
+        let mins = end - Venue.nowMinutes
         return mins >= 0 ? mins : nil
     }
 
     /// Minutes until today's happy hour starts, or nil if there's no
     /// happy hour today, it's already started, or we couldn't parse.
     var minutesUntilStart: Int? {
-        guard let start = todayStartDate() else { return nil }
-        let mins = Int(start.timeIntervalSince(Date()) / 60)
+        guard let start = todayStartMinutes else { return nil }
+        let mins = start - Venue.nowMinutes
         return mins > 0 ? mins : nil
     }
 
     /// Currently inside today's happy hour window.
     var isLiveNow: Bool {
-        guard let start = todayStartDate(), let end = todayEndDate() else { return false }
-        let now = Date()
+        guard let start = todayStartMinutes, let end = todayEndMinutes else { return false }
+        let now = Venue.nowMinutes
         return now >= start && now < end
     }
 
@@ -188,24 +210,37 @@ struct Venue: Identifiable {
 
     // MARK: - Internal date helpers
 
-    /// Combines today's date with the schedule's start time string.
-    /// Returns nil if no schedule today or the string isn't parseable.
-    private func todayStartDate() -> Date? { dateForTodayTime(deal(for: TODAY)?.startTime) }
-    private func todayEndDate()   -> Date? { dateForTodayTime(deal(for: TODAY)?.endTime) }
+    /// Today's happy hour window expressed as minutes since local midnight.
+    private var todayStartMinutes: Int? { Venue.minutesSinceMidnight(deal(for: TODAY)?.startTime) }
+    private var todayEndMinutes:   Int? { Venue.minutesSinceMidnight(deal(for: TODAY)?.endTime) }
 
-    private func dateForTodayTime(_ raw: String?) -> Date? {
-        guard let raw, !raw.isEmpty else { return nil }
-        // Internal format is always "HH:mm" since admin uses a picker and
-        // the repo trims Postgres's "HH:mm:ss" down to "HH:mm" on read.
-        let fmt = DateFormatter()
-        fmt.locale = Locale(identifier: "en_US_POSIX")
-        fmt.timeZone = .current
-        fmt.dateFormat = "HH:mm"
-        guard let parsed = fmt.date(from: raw) else { return nil }
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        let comps = cal.dateComponents([.hour, .minute], from: parsed)
-        return cal.date(byAdding: comps, to: today)
+    /// "HH:mm" → minutes since midnight. Hand-parsed rather than run
+    /// through a DateFormatter on purpose: live-status is evaluated for
+    /// every venue on every map/list render (and previously once per
+    /// comparison inside a sort), and allocating a fresh DateFormatter
+    /// each time was the dominant cost in map pan/zoom.
+    ///
+    /// Internal format is always "HH:mm" — admin uses a picker and the
+    /// repo trims Postgres's "HH:mm:ss" down to "HH:mm" on read.
+    /// Tolerates surrounding whitespace (the DateFormatter it replaced did)
+    /// and a trailing ":ss" (Postgres `time` shape, in case a payload ever
+    /// reaches here untrimmed — the old parser returned nil for those, which
+    /// silently made the venue never read as live).
+    static func minutesSinceMidnight(_ raw: String?) -> Int? {
+        guard let raw else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return nil }
+        let parts = trimmed.split(separator: ":")
+        guard parts.count >= 2,
+              let h = Int(parts[0]), let m = Int(parts[1]),
+              (0...23).contains(h), (0...59).contains(m) else { return nil }
+        return h * 60 + m
+    }
+
+    /// Current wall-clock time as minutes since local midnight.
+    private static var nowMinutes: Int {
+        let c = Calendar.current.dateComponents([.hour, .minute], from: Date())
+        return (c.hour ?? 0) * 60 + (c.minute ?? 0)
     }
 
     func deal(for day: DayKey) -> DaySchedule? { schedule[day] }

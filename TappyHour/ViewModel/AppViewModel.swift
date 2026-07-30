@@ -238,16 +238,25 @@ class AppViewModel {
         //   2. Other live-now venues
         //   3. Everything else (closed, etc.)
         // Distance is the tie-breaker within each tier.
-        return filtered.sorted { lhs, rhs in
-            let lFav = favoriteVenueIds.contains(lhs.id)
-            let rFav = favoriteVenueIds.contains(rhs.id)
-            let lTier = (lFav && lhs.isLiveNow) ? 0 : (lhs.isLiveNow ? 1 : (lFav ? 2 : 3))
-            let rTier = (rFav && rhs.isLiveNow) ? 0 : (rhs.isLiveNow ? 1 : (rFav ? 2 : 3))
-            if lTier != rTier { return lTier < rTier }
-            let a = CLLocation(latitude: lhs.coordinate.latitude, longitude: lhs.coordinate.longitude)
-            let b = CLLocation(latitude: rhs.coordinate.latitude, longitude: rhs.coordinate.longitude)
-            return ref.distance(from: a) < ref.distance(from: b)
-        }
+        //
+        // Sort keys are computed once per venue rather than inside the
+        // comparator. The comparator runs O(n log n) times, so doing the
+        // live-status check and allocating two CLLocations in there meant
+        // thousands of redundant allocations per render — and `venuesInView`
+        // is read several times per frame (map pins, sheet header, sheet
+        // list) while panning and zooming.
+        let keyed: [(venue: Venue, tier: Int, distance: CLLocationDistance)] =
+            filtered.map { v in
+                let isFav = favoriteVenueIds.contains(v.id)
+                let live = v.isLiveNow
+                let tier = (isFav && live) ? 0 : (live ? 1 : (isFav ? 2 : 3))
+                let loc = CLLocation(latitude: v.coordinate.latitude,
+                                     longitude: v.coordinate.longitude)
+                return (v, tier, ref.distance(from: loc))
+            }
+        return keyed
+            .sorted { $0.tier != $1.tier ? $0.tier < $1.tier : $0.distance < $1.distance }
+            .map(\.venue)
     }
 
     func venue(_ id: String) -> Venue? { venues.first { $0.id == id } }
