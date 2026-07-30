@@ -24,6 +24,22 @@ packages:
     url: https://github.com/kean/Nuke
     from: "12.0.0"
 
+schemes:
+  TappyHour:
+    build:
+      targets:
+        TappyHour: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
 targets:
   TappyHour:
     type: application
