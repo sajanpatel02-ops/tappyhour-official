@@ -56,7 +56,7 @@ struct MapDiscoveryView: View {
         ZStack(alignment: .bottomTrailing) {
             // Map
             Map(position: $position) {
-                ForEach(vm.filteredVenues.filter(vm.matchesDayFilter)) { venue in
+                ForEach(vm.venuesInView) { venue in
                     Annotation("", coordinate: venue.coordinate, anchor: .bottom) {
                         VenuePinView(venue: venue, vm: vm)
                     }

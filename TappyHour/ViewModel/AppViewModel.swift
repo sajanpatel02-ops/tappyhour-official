@@ -213,8 +213,11 @@ class AppViewModel {
     }
 
     /// Venues visible in the current map region, sorted by distance from
-    /// the user (or map center if we don't have a location yet). This is
-    /// what the list view shows so "the list matches what's on the map".
+    /// the user (or map center if we don't have a location yet). Drives both
+    /// the list view ("the list matches what's on the map") and the map's
+    /// own pins — bounding pin count to what's on-screen keeps rendering
+    /// cost roughly constant as the total venue count grows, instead of
+    /// scaling with every venue in the database.
     ///
     /// Falls back to all venues when we don't have a region yet (first
     /// launch, before the map appears). Also applies the search query.
